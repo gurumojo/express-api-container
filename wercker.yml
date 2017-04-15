@@ -1,36 +1,58 @@
-# This references the default nodejs container from
-# the Docker Hub: https://registry.hub.docker.com/_/node/
-# If you want Nodesource's container you would reference nodesource/node
-# Read more about containers on our dev center
-# http://devcenter.wercker.com/docs/containers/index.html
-box: node
-# This is the build pipeline. Pipelines are the core of wercker
-# Read more about pipelines on our dev center
-# http://devcenter.wercker.com/docs/pipelines/index.html
+box: node:slim
 
-# You can also use services such as databases. Read more on our dev center:
-# http://devcenter.wercker.com/docs/services/index.html
-# services:
-    # - postgres
-    # http://devcenter.wercker.com/docs/services/postgresql.html
+no-response-timeout: 15
 
-    # - mongo
-    # http://devcenter.wercker.com/docs/services/mongodb.html
-build:
-  # The steps that will be executed on build
-  # Steps make up the actions in your pipeline
-  # Read more about steps on our dev center:
-  # http://devcenter.wercker.com/docs/steps/index.html
+services:
+    - redis
+
+dev:
   steps:
-    # A step that executes `npm install` command
+    #- script:
+    #    name: environment
+    #    code: env
+    #- script:
+    #    name: install redis-cli
+    #    code: |
+    #      apt-get update
+    #      apt-get install -y redis-tools
+    #- script:
+    #    name: wait for redis
+    #    code: |
+    #      while ! redis-cli --scan -h $REDIS_PORT_6379_TCP_ADDR
+    #      </dev/null; do sleep 3; done
+    #- internal/shell
     - npm-install
-    # A step that executes `npm test` command
-    # - npm-test
+    - internal/watch:
+        code: |
+          export REDIS_HOST=$REDIS_PORT_6379_TCP_ADDR
+          export REDIS_PORT=$REDIS_PORT_6379_TCP_PORT
+          node service
+        reload: true
 
-    # A custom script step, name value is used in the UI
-    # and the code value contains the command that get executed
+build:
+  steps:
+    - npm-install
+    - npm-test
     - script:
-        name: echo nodejs information
+        name: version check
         code: |
           echo "node version $(node -v) running"
           echo "npm version $(npm -v) running"
+
+push-to-ecr:
+  box: busybox
+  steps:
+    - internal/docker-push:
+        aws-access-key: $AWS_ACCESS_KEY_ID
+        aws-secret-key: $AWS_SECRET_ACCESS_KEY
+        aws-region: $AWS_REGION
+        aws-registry-id: $AWS_REGISTRY_ID
+        repository: $REPO
+        tag: latest, $WERCKER_GIT_COMMIT, $WERCKER_GIT_BRANCH
+
+deploy:
+  steps:
+    - script:
+        name: testing deploy
+        code: node --version
+    - npm-install

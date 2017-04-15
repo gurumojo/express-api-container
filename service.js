@@ -17,8 +17,8 @@ const passport = require('./library/session');
 const pubsub = require('./library/pubsub');
 const redact = require('./library/redact');
 
+const EXPRESS_HOST = process.env.EXPRESS_HOST || 'service';
 const EXPRESS_PORT = process.env.EXPRESS_PORT || 8000;
-const EXPRESS_SERVICE = process.env.EXPRESS_SERVICE || 'service';
 const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
 const REDIS_PORT = process.env.REDIS_PORT || 6379;
 
@@ -30,11 +30,11 @@ const SESSION_SECRET = process.env.SESSION_SECRET || 'y0uRbl00Dt4st3Slik3$yruP';
 function delegate(channel, message) {
 	const object = json.object(message);
 	if (get(object, 'error')) {
-		logger.error(`${EXPRESS_SERVICE}.delegate`, error);
+		logger.error(`${EXPRESS_HOST}.delegate`, error);
 	}
 	if (!get(object, 'subscribe')) {
-		logger.info(`${EXPRESS_SERVICE}.delegate`, object);
-		logger.warn(`${EXPRESS_SERVICE}.${object.method}`, {pending: 'message delegation'});
+		logger.info(`${EXPRESS_HOST}.delegate`, object);
+		logger.warn(`${EXPRESS_HOST}.${object.method}`, {pending: 'message delegation'});
 	}
 }
 
@@ -46,7 +46,7 @@ function discover(type, array, value) {
 }
 
 function dispatch(level, flash) {
-	flash.forEach(message => logger[level](`${EXPRESS_SERVICE}.message`, redact(message)));
+	flash.forEach(message => logger[level](`${EXPRESS_HOST}.message`, redact(message)));
 }
 
 function message(request, response, next) {
@@ -62,12 +62,12 @@ function requestLogger(request, response, next) {
 			dispatch(method, response.locals[method]);
 		}
 	});
-	logger.info(`${EXPRESS_SERVICE}.request`, redact(pick(request, REQUEST_WHITELIST)));
+	logger.info(`${EXPRESS_HOST}.request`, redact(pick(request, REQUEST_WHITELIST)));
 	next();
 }
 
 function sessionLogger(request, response, next) {
-	logger.debug(`${EXPRESS_SERVICE}.session`, request.session);
+	logger.debug(`${EXPRESS_HOST}.session`, request.session);
 	next();
 }
 
@@ -117,5 +117,5 @@ service.listen(EXPRESS_PORT, () => {
 		timestamp: init,
 		uri: `http://${hostname}:${EXPRESS_PORT}/`
 	});
-	pubsub.subscribe(EXPRESS_SERVICE, delegate);
+	pubsub.subscribe(EXPRESS_HOST, delegate);
 });

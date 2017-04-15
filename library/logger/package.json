@@ -1,0 +1,15 @@
+{
+  "name": "logger",
+  "version": "0.0.0",
+  "description": "Customized Winston Logger",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo 'Error: no test specified' && exit 1"
+  },
+  "author": "theguy@gurumojo.net",
+  "license": "ISC",
+  "dependencies": {
+    "lodash": "4.16.x",
+    "winston": "2.3.x"
+  }
+}
