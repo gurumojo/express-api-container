@@ -7,20 +7,6 @@ services:
 
 dev:
   steps:
-    #- script:
-    #    name: environment
-    #    code: env
-    #- script:
-    #    name: install redis-cli
-    #    code: |
-    #      apt-get update
-    #      apt-get install -y redis-tools
-    #- script:
-    #    name: wait for redis
-    #    code: |
-    #      while ! redis-cli --scan -h $REDIS_PORT_6379_TCP_ADDR
-    #      </dev/null; do sleep 3; done
-    #- internal/shell
     - npm-install
     - internal/watch:
         code: |
@@ -33,26 +19,34 @@ build:
   steps:
     - npm-install
     - npm-test
-    - script:
-        name: version check
-        code: |
-          echo "node version $(node -v) running"
-          echo "npm version $(npm -v) running"
-
-push-to-ecr:
-  box: busybox
-  steps:
     - internal/docker-push:
         aws-access-key: $AWS_ACCESS_KEY_ID
         aws-secret-key: $AWS_SECRET_ACCESS_KEY
         aws-region: $AWS_REGION
         aws-registry-id: $AWS_REGISTRY_ID
-        repository: $REPO
+        repository: $GITHUB_REPOSITORY
         tag: latest, $WERCKER_GIT_COMMIT, $WERCKER_GIT_BRANCH
+  after-steps:
+    - slack-notifier:
+        branch: $SLACK_BRANCH
+        channel: $SLACK_CHANNEL
+        icon_url: $SLACK_ICON_URL
+        notify_on: $SLACK_NOTIFY_ON
+        url: $SLACK_URL
+        username: $SLACK_USERNAME
 
 deploy:
+  box: busybox
+  steps:
   steps:
     - script:
         name: testing deploy
         code: node --version
-    - npm-install
+  after-steps:
+    - slack-notifier:
+        branch: $SLACK_BRANCH
+        channel: $SLACK_CHANNEL
+        icon_url: $SLACK_ICON_URL
+        notify_on: $SLACK_NOTIFY_ON
+        url: $SLACK_URL
+        username: $SLACK_USERNAME
