@@ -2,9 +2,9 @@
   "name": "express-api-container",
   "version": "0.0.0",
   "description": "Docker Container for Express API Service",
-  "main": "server.js",
+  "main": "service.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo 'Error: no test specified' && exit 1"
   },
   "repository": {
     "type": "git",

@@ -1,0 +1,5 @@
+*.sw[g-p]
+.git*
+.dockerignore
+Dockerfile
+node_modules
