@@ -1,15 +1,14 @@
 FROM node:slim
-EXPOSE 8000
+EXPOSE 80
 LABEL gurumojo.environment=development gurumojo.service=example
 HEALTHCHECK --interval=10s \
 	--timeout=3s \
 	--retries=3 \
-	CMD curl -f http://localhost:8000/
+	CMD curl -f http://localhost:80/
 WORKDIR /opt/gurumojo
-COPY package.json yarn.lock /opt/gurumojo/
-RUN npm install yarn && yarn \
-	&& yarn cache clean \
-	&& rm -rf node_modules/yarn
+COPY install.sh package.json yarn.lock /opt/gurumojo/
+ADD library /opt/gurumojo/library
+RUN /opt/gurumojo/install.sh
 COPY . /opt/gurumojo/
 USER node
 CMD ["node", "service.js"]
