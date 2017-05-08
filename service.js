@@ -17,14 +17,19 @@ const passport = require('./library/session');
 const pubsub = require('./library/pubsub');
 const redact = require('./library/redact');
 
-const EXPRESS_HOST = process.env.EXPRESS_HOST || 'service';
+const EXPRESS_HOST = process.env.EXPRESS_HOST || 'api';
 const EXPRESS_PORT = process.env.EXPRESS_PORT || 8000;
-const REDIS_HOST = process.env.REDIS_HOST || 'localhost';
+const REDIS_HOST = process.env.REDIS_HOST || '127.0.0.1';
 const REDIS_PORT = process.env.REDIS_PORT || 6379;
 
 const DISCOVERY_BLACKLIST = ['Dockerfile', 'node_modules'];
 const REQUEST_WHITELIST = ['method', 'path', 'query', 'body', 'headers', 'sessionID'];
 const SESSION_SECRET = process.env.SESSION_SECRET || 'y0uRbl00Dt4st3Slik3$yruP';
+
+const error404 = {
+	code: 404,
+	message: 'NOT_FOUND'
+};
 
 
 function delegate(channel, message) {
@@ -39,14 +44,22 @@ function delegate(channel, message) {
 }
 
 function discover(type, array, value) {
-	if (!includes(DISCOVERY_BLACKLIST, value) && value.indexOf('.') < 0) {
-		array.push(require(`./${type}/${value}`))
+	if (!includes(DISCOVERY_BLACKLIST, value) && value.indexOf('.') !== 0) {
+		const name = value.split('.')[0];
+		logger.info(`${EXPRESS_HOST}.discover`, {type, name});
+		array.push({
+			module: require(`./${type}/${value}`),
+			name,
+			type
+		});
 	}
 	return array;
 }
 
 function dispatch(level, flash) {
-	flash.forEach(message => logger[level](`${EXPRESS_HOST}.message`, redact(message)));
+	flash.forEach(message =>
+		logger[level](`${EXPRESS_HOST}.message`, redact(message))
+	);
 }
 
 function message(request, response, next) {
@@ -62,7 +75,9 @@ function requestLogger(request, response, next) {
 			dispatch(method, response.locals[method]);
 		}
 	});
-	logger.info(`${EXPRESS_HOST}.request`, redact(pick(request, REQUEST_WHITELIST)));
+	const redacted = redact(pick(request, REQUEST_WHITELIST));
+	const method = request.path === '/status' ? 'debug' : 'info';
+	logger[method](`${EXPRESS_HOST}.request`, redacted);
 	next();
 }
 
@@ -72,12 +87,14 @@ function sessionLogger(request, response, next) {
 }
 
 
+logger.info(`${EXPRESS_HOST}.init`, {timestamp: init, container: hostname});
+
 const service = express();
+
 service.disable('etag');
 service.disable('x-powered-by');
 
 service.use(bodyParser.json());
-service.use(bodyParser.urlencoded({extended: false}))
 
 service.use(flash());
 
@@ -102,19 +119,20 @@ service.use(sessionLogger);
 
 readdir(`${__dirname}/middleware`)
 .reduce(partial(discover, 'middleware'),  [])
-.forEach(middleware => service.use(middleware));
+.forEach(middleware => service.use(middleware.module));
 
 readdir(`${__dirname}/route`)
 .reduce(partial(discover, 'route'), [])
-.forEach(route => service.use(route));
+.forEach(route => service.use(`/${route.name}`, route.module));
 
-service.get('/*', (request, response) => {
-	response.json({wildcard: true});
+service.use('/', (request, response) => {
+	response.status(404);
+	response.send(error404);
 });
 
 service.listen(EXPRESS_PORT, () => {
-	logger.info('init', {
-		timestamp: init,
+	logger.info(`${EXPRESS_HOST}.listen`, {
+		timestamp: Date.now(),
 		uri: `http://${hostname}:${EXPRESS_PORT}/`
 	});
 	pubsub.subscribe(EXPRESS_HOST, delegate);

@@ -1,6 +1,8 @@
 'use strict';
+const init = Date.now();
+
 const Promise = require('bluebird');
-const dns = require('dns');
+const cores = require('os').cpus().length;
 const process = require('process');
 const redis = require('redis');
 const {isArray, isPlainObject, isString, omit, partial} = require('lodash');
@@ -10,41 +12,39 @@ const logger = require('../logger');
 Promise.promisifyAll(redis.RedisClient.prototype); // direct execution
 Promise.promisifyAll(redis.Multi.prototype); // transactional execution
 
-const host = process.env.REDIS_HOST || 'localhost';
-const init = Date.now();
+const host = process.env.REDIS_HOST || '127.0.0.1';
+const port = process.env.REDIS_PORT || 6379;
 const keepalive = {
-	delay: process.env.POLL_INTERVAL || 100,
+	delay: process.env.POLL_INTERVAL || 1000,
 	limit: process.env.POLL_TIMEOUT || 10000
 };
-const regex = {
-	IPv4: /^(\d{1,3}\.){3,3}\d{1,3}$/,
-	IPv6: /^(::)?(((\d{1,3}\.){3}(\d{1,3}){1})?([0-9a-f]){0,4}:{0,2}){1,8}(::)?$/i
-}
-const hostIsIP = !!regex.IPv4.test(host) || !!regex.IPv6.test(host);
-const lookupType = hostIsIP ? 'reverse' : 'resolve';
 let db = null;
 let hold = false;
 
 
 function connect() {
 	logger.debug('data.connect', {active: false});
-	db = redis.createClient({host});
+	db = redis.createClient({host, port});
 	db.on('connect', connectionInfo);
-	db.on('error', partial(logger.error, 'data.redis'));
+	db.on('error', error => {
+		logger.error('data.redis', error);
+		hold = false;
+	});
 }
 
 function connectionInfo() {
-	logger.info('data.connect', {active: true});
+	clearTimeout(keepalive.timeout);
+	clearInterval(keepalive.interval);
+	logger.info('data.redis', {host, port});
 	db.infoAsync('server')
 	.then(server => logger.debug('data.server', rewrite(server)));
 	db.infoAsync('keyspace')
 	.then(keys => logger.debug('data.keys', rewrite(keys)));
-	clearInterval(keepalive.interval);
 }
 
 function fail() {
-	logger.warn('data.init', {timeout: true});
-	clearInterval(keepalive.interval);
+	logger.error('data.fail', {host, port, timeout: 'redis.createClient'});
+	process.exit(1);
 }
 
 function get(key) {
@@ -58,6 +58,11 @@ function get(key) {
 	}
 }
 
+function holdAndConnect() {
+	hold = true;
+	connect();
+}
+
 function keys(pattern) {
 	logger.debug('data.keys', {pattern});
 	if (isString(pattern)) {
@@ -69,7 +74,7 @@ function keys(pattern) {
 
 function poll(keepalive) {
 	if (!hold) {
-		testAndConnect();
+		holdAndConnect();
 	}
 	keepalive.timestamp = Date.now();
 	keepalive.uptime = keepalive.timestamp - init;
@@ -79,7 +84,7 @@ function poll(keepalive) {
 function quit() {
 	db.quit();
 	db = null;
-	logger.info('data.connect', {active: false});
+	logger.info('data.connect', {timestamp: Date.now(), active: false});
 }
 
 function rewrite(item) {
@@ -114,18 +119,6 @@ function set(key, member, value) {
 			'(string, string, string) | (string, {string, ...}) input required'
 		));
 	}
-}
-
-function testAndConnect() {
-	dns[lookupType](host, (error, name) => {
-		if (error) {
-			logger.warn(`data.connect DNS ${lookupType} failure`, error);
-		} else {
-			clearTimeout(keepalive.timeout);
-			hold = true;
-			connect();
-		}
-	});
 }
 
 function vals(key) {

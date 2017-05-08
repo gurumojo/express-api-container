@@ -1,8 +1,10 @@
 'use strict';
-const router = require('express').Router();
+const logger = require('../library/logger');
 
-router.get('/status', (request, response) => {
+const status = require('express')();
+
+status.get('/', (request, response) => {
 	response.send({status: 'OK'});
 });
 
-module.exports = router;
+module.exports = status;
