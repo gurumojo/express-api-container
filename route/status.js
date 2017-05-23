@@ -1,7 +1,8 @@
 'use strict';
-const logger = require('../library/logger');
-
 const status = require('express')();
+
+status.disable('etag');
+status.disable('x-powered-by');
 
 status.get('/', (request, response) => {
 	response.send({status: 'OK'});

@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-[[ -n "$EXPRESS_HOST" ]] || EXPRESS_HOST=0.0.0.0
+EXPRESS_HOST=0.0.0.0
 
 [[ -n "$EXPRESS_PORT" ]] || EXPRESS_PORT=8000
 
