@@ -15,7 +15,6 @@ const json = require('./library/json');
 const logger = require('./library/logger');
 const passport = require('./library/session');
 const pubsub = require('./library/pubsub');
-const redact = require('./library/redact');
 
 const EXPRESS_HOST = process.env.EXPRESS_HOST || 'api';
 const EXPRESS_PORT = process.env.EXPRESS_PORT || 8000;
@@ -24,6 +23,7 @@ const REDIS_PORT = process.env.REDIS_PORT || 6379;
 
 const DISCOVERY_BLACKLIST = ['Dockerfile', 'node_modules'];
 const REQUEST_WHITELIST = ['method', 'path', 'query', 'body', 'headers', 'sessionID'];
+const RESPONSE_WHITELIST = ['headers', 'statusCode'];
 const SESSION_SECRET = process.env.SESSION_SECRET || 'y0uRbl00Dt4st3Slik3$yruP';
 
 const error404 = {
@@ -58,7 +58,7 @@ function discover(type, array, value) {
 
 function dispatch(level, flash) {
 	flash.forEach(message =>
-		logger[level](`${EXPRESS_HOST}.message`, redact(message))
+		logger[level](`${EXPRESS_HOST}.message`, message)
 	);
 }
 
@@ -75,9 +75,26 @@ function requestLogger(request, response, next) {
 			dispatch(method, response.locals[method]);
 		}
 	});
-	const redacted = redact(pick(request, REQUEST_WHITELIST));
 	const method = request.path === '/status' ? 'debug' : 'info';
-	logger[method](`${EXPRESS_HOST}.request`, redacted);
+	logger[method](`${EXPRESS_HOST}.request`, pick(request, REQUEST_WHITELIST));
+	next();
+}
+
+function responseLogger(request, response, next) {
+	const send = response.send;
+	let called = false;
+	response.send = payload => {
+		send.apply(response, [payload]);
+		if (!called) {
+			called = true;
+			const method = request.baseUrl === '/status' ? 'debug' : 'info';
+			logger[method](`${EXPRESS_HOST}.response`, Object.assign(
+				pick(response, RESPONSE_WHITELIST),
+				{body: JSON.parse(payload)},
+				pick(request, 'sessionID')
+			));
+		}
+	};
 	next();
 }
 
@@ -115,6 +132,7 @@ service.use(passport.session());
 
 service.use(message);
 service.use(requestLogger);
+service.use(responseLogger);
 service.use(sessionLogger);
 
 readdir(`${__dirname}/middleware`)
