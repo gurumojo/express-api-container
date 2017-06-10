@@ -1,15 +1,14 @@
 'use strict'
 const process = require('process');
 const winston = require('winston');
-const {omit} = require('lodash');
 
-const redact = require(`${__dirname}/../redact`);
+const redact = require('../redact');
 
-const env = process.env.NODE_ENV === 'development' ? 'debug' : 'info';
+const logLevel = process.env.NODE_ENV === 'development' ? 'debug' : 'info';
 
 const logger = new winston.Logger({
 	transports: [
-		new winston.transports.Console({level: env})
+		new winston.transports.Console({level: logLevel})
 		//new winston.transports.File({filename: 'error.log', level: 'error'})
 	]
 });

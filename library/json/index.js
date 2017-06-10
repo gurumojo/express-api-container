@@ -1,51 +1,33 @@
 'use strict';
-const logger = require('../logger');
-
-//logger.level('debug');
 
 function object(input) {
-	logger.debug('json.object', {input: typeof input});
-	let object = null;
+	let output = null;
 	if (typeof input === 'string') {
 		try {
-			object = JSON.parse(input);
-		} catch (x) {
-			logger.error('json.object', {message: x.message});
-		}
-	} else {
-		logger.error('json.object', {required: 'input', type: 'string'});
+			output = JSON.parse(input);
+		} catch (x) { }
 	}
-	return object;
+	return output;
 }
 
 function pretty(input) {
-	logger.debug('json.pretty', {input: typeof input});
-	let pretty = '';
+	let output = '';
 	if (typeof input === 'object') {
 		try {
-			pretty = JSON.stringify(input, null, '  ');
-		} catch (x) {
-			logger.error('json.pretty', {message: x.message});
-		}
-	} else {
-		logger.error('json.pretty', {required: 'input', type: 'object'});
+			output = JSON.stringify(input, null, '  ');
+		} catch (x) { }
 	}
-	return pretty;
+	return output;
 }
 
 function string(input) {
-	logger.debug('json.string', {input: typeof input});
-	let string = '';
+	let output = '';
 	if (typeof input === 'object') {
 		try {
-			string = JSON.stringify(input);
-		} catch (x) {
-			logger.error('json.string', {message: x.message});
-		}
-	} else {
-		logger.error('json.string', {required: 'input', type: 'object'});
+			output = JSON.stringify(input);
+		} catch (x) { }
 	}
-	return string;
+	return output;
 }
 
 module.exports = {

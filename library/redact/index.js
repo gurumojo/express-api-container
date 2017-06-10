@@ -1,17 +1,26 @@
 'use strict';
-const {forEach, includes, isArray, isObject, isObjectLike, omitBy} = require('lodash');
+const {forEach, includes, isArray, isObject, isObjectLike, isString, omitBy} = require('lodash');
 
-const LOGGER_BLACKLIST = ['cookie', 'flash', 'password', 'secret'];
+const constant = require('../constant');
+const json = require('../json');
 
-function predicate(value, key) {
-	return includes(LOGGER_BLACKLIST, key);
+function blacklist(value, key) {
+	return includes(constant.LOGGER_BLACKLIST, key);
 }
 
 function scrub(item) {
 	if (isObjectLike(item) && !isArray(item)) {
-		return forEach(omitBy(item, predicate), (value, key, object) => {
-			object[key] = isObject(value) ? omitBy(value, predicate) : value;
+		return forEach(omitBy(item, blacklist), (value, key, object) => {
+			object[key] = isObject(value) ? omitBy(value, blacklist) : value;
 		});
+	} else if(isString(item)) {
+		let object = scrub(json.object(item));
+		if (item.match(/\n/)) {
+			return json.pretty(object);
+		}
+		return json.string(object);
+	} else if (isArray(item)) {
+		return item.map(scrub);
 	}
 	return item;
 }
