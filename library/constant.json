@@ -1,0 +1,17 @@
+{
+	"EXPRESS_HOST": "express-api",
+	"EXPRESS_PORT": 8000,
+	"EXPRESS_REQUEST_LOG_WHITELIST": [
+		"method", "path", "query", "body", "headers", "sessionID"
+	],
+	"EXPRESS_RESPONSE_LOG_WHITELIST": [
+		"body", "headers", "statusCode"
+	],
+	"HTTP_STATUS_NOT_FOUND": 404,
+	"LOGGER_BLACKLIST": [
+		"cookie", "flash", "password", "secret"
+	],
+	"REDIS_HOST": "0.0.0.0",
+	"REDIS_PORT": 6379,
+	"SESSION_SECRET": "y0uRbl00Dt4st3Slik3$yruP"
+}
