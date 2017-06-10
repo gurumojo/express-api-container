@@ -5,7 +5,7 @@ npm install yarn &> /dev/null
 
 echo "Installing dependencies ..."
 yarn
-for lib in `ls library` ;do
+for lib in $(ls library) ;do
 	# isolate name from file extension (if any)
 	name=$(echo "$lib" | sed -e 's;\(.*\)\.[a-z]*$;\1;')
 	# filter directories from files
