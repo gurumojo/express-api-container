@@ -1,6 +1,6 @@
 FROM node:slim
 
-LABEL gurumojo.service=http
+LABEL gurumojo.service=express-api
 
 EXPOSE 8000
 
