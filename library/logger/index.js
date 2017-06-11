@@ -1,4 +1,5 @@
 'use strict'
+const hostname = require('os').hostname();
 const process = require('process');
 const winston = require('winston');
 
@@ -13,11 +14,11 @@ const logger = new winston.Logger({
 	]
 });
 
-logger.cli();
+let metadata = null;
+const system = {hostname};
 
-
-function apply(level, message, meta) {
-	logger.log(level, `${new Date().toISOString()} ${message}:`, redact(meta));
+function apply(level, namespace, data) {
+	logger.log(level, `${new Date().toISOString()} ${metadata} ${namespace}:`, redact(data));
 }
 
 function debug(message, meta) {
@@ -26,6 +27,10 @@ function debug(message, meta) {
 
 function error(message, meta) {
 	apply('error', message, meta);
+}
+
+function meta(data) {
+	metadata = JSON.stringify(Object.assign({}, data, system));
 }
 
 function info(message, meta) {
@@ -41,11 +46,15 @@ function warn(message, meta) {
 }
 
 
+logger.cli();
+meta();
+
 module.exports = {
 	profile: winston.profile,
 	level,
 	debug,
 	info,
+	meta,
 	warn,
 	error
 };

@@ -5,30 +5,30 @@ const bodyParser = require('body-parser');
 const express = require('express');
 const expressSession = require('express-session');
 const flash = require('connect-flash');
-const hostname = require('os').hostname();
 const process = require('process');
 const readdir = require('fs').readdirSync;
 const RedisStore = require('connect-redis')(expressSession)
-const {get, includes, partial, pick} = require('lodash');
+const {get, isString, partial, pick} = require('lodash');
 
+const constant = require('./library/constant');
 const json = require('./library/json');
 const logger = require('./library/logger');
+const network = require('./library/network');
 const passport = require('./library/session');
 const pubsub = require('./library/pubsub');
 
-const EXPRESS_HOST = process.env.EXPRESS_HOST || 'api';
-const EXPRESS_PORT = process.env.EXPRESS_PORT || 8000;
-const REDIS_HOST = process.env.REDIS_HOST || '127.0.0.1';
-const REDIS_PORT = process.env.REDIS_PORT || 6379;
-
-const DISCOVERY_BLACKLIST = ['Dockerfile', 'node_modules'];
-const REQUEST_WHITELIST = ['method', 'path', 'query', 'body', 'headers', 'sessionID'];
-const RESPONSE_WHITELIST = ['headers', 'statusCode'];
-const SESSION_SECRET = process.env.SESSION_SECRET || 'y0uRbl00Dt4st3Slik3$yruP';
+const EXPRESS_HOST = process.env.EXPRESS_HOST || constant.EXPRESS_HOST;
+const EXPRESS_PORT = process.env.EXPRESS_PORT || constant.EXPRESS_PORT;
+const NODE_ENV = process.env.NODE_ENV;
+const REDIS_HOST = process.env.REDIS_HOST || constant.REDIS_HOST;
+const REDIS_PORT = process.env.REDIS_PORT || constant.REDIS_PORT;
+const SESSION_SECRET = process.env.SESSION_SECRET || constant.SESSION_SECRET;
 
 const error404 = {
-	code: 404,
-	message: 'NOT_FOUND'
+	error: {
+		code: constant.HTTP_STATUS_NOT_FOUND,
+		message: 'NOT_FOUND'
+	}
 };
 
 
@@ -44,7 +44,7 @@ function delegate(channel, message) {
 }
 
 function discover(type, array, value) {
-	if (!includes(DISCOVERY_BLACKLIST, value) && value.indexOf('.') !== 0) {
+	if (value.indexOf('.') !== 0) {
 		const name = value.split('.')[0];
 		logger.info(`${EXPRESS_HOST}.discover`, {type, name});
 		array.push({
@@ -75,36 +75,46 @@ function requestLogger(request, response, next) {
 			dispatch(method, response.locals[method]);
 		}
 	});
-	const method = request.path === '/status' ? 'debug' : 'info';
-	logger[method](`${EXPRESS_HOST}.request`, pick(request, REQUEST_WHITELIST));
+	const method = isStatusRoute(request) ? 'debug' : 'info';
+	logger[method](`${EXPRESS_HOST}.request`, Object.assign(
+		pick(request, constant.LOGGER_WHITELIST_EXPRESS_REQUEST),
+		{body: JSON.stringify(request.body)}
+	));
 	next();
+}
+
+function isStatusRoute(request) {
+	return (request.path === '/status' || request.baseUrl === '/status');
 }
 
 function responseLogger(request, response, next) {
 	const send = response.send;
 	let called = false;
-	response.send = payload => {
-		send.apply(response, [payload]);
+	response.send = body => {
+		send.apply(response, [body]);
 		if (!called) {
 			called = true;
-			const method = request.baseUrl === '/status' ? 'debug' : 'info';
+			let method = 'info';
+			if (response.statusCode >= 500) {
+				method = 'error';
+			} else if (response.statusCode >= 400) {
+				method = 'warn';
+			}
+			if (isStatusRoute(request)) {
+				method = 'debug';
+			}
 			logger[method](`${EXPRESS_HOST}.response`, Object.assign(
-				pick(response, RESPONSE_WHITELIST),
-				{body: JSON.parse(payload)},
-				pick(request, 'sessionID')
+				{sessionID: request.sessionID},
+				pick(response, constant.LOGGER_WHITELIST_EXPRESS_RESPONSE),
+				{body}
 			));
 		}
 	};
 	next();
 }
 
-function sessionLogger(request, response, next) {
-	logger.debug(`${EXPRESS_HOST}.session`, request.session);
-	next();
-}
 
-
-logger.info(`${EXPRESS_HOST}.init`, {timestamp: init, container: hostname});
+logger.info(`${EXPRESS_HOST}.init`, {timestamp: init});
 
 const service = express();
 
@@ -133,7 +143,6 @@ service.use(passport.session());
 service.use(message);
 service.use(requestLogger);
 service.use(responseLogger);
-service.use(sessionLogger);
 
 readdir(`${__dirname}/middleware`)
 .reduce(partial(discover, 'middleware'),  [])
@@ -144,14 +153,14 @@ readdir(`${__dirname}/route`)
 .forEach(route => service.use(`/${route.name}`, route.module));
 
 service.use('/', (request, response) => {
-	response.status(404);
+	response.status(constant.HTTP_STATUS_NOT_FOUND);
 	response.send(error404);
 });
 
 service.listen(EXPRESS_PORT, () => {
 	logger.info(`${EXPRESS_HOST}.listen`, {
-		timestamp: Date.now(),
-		uri: `http://${hostname}:${EXPRESS_PORT}/`
+		host: JSON.stringify(network()), 
+		port: EXPRESS_PORT
 	});
 	pubsub.subscribe(EXPRESS_HOST, delegate);
 });
