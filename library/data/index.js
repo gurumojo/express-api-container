@@ -5,7 +5,7 @@ const Promise = require('bluebird');
 const cores = require('os').cpus().length;
 const process = require('process');
 const redis = require('redis');
-const {isArray, isPlainObject, isString, omit, partial} = require('lodash');
+const {isArray, isPlainObject, isString, pick, partial} = require('lodash');
 
 const logger = require('../logger');
 
@@ -78,7 +78,7 @@ function poll(keepalive) {
 	}
 	keepalive.timestamp = Date.now();
 	keepalive.uptime = keepalive.timestamp - init;
-	logger.debug('data.poll', omit(keepalive, 'interval'));
+	logger.debug('data.poll', pick(keepalive, ['delay', 'limit', 'timestamp', 'uptime']));
 }
 
 function quit() {
