@@ -8,7 +8,7 @@ const flash = require('connect-flash');
 const process = require('process');
 const readdir = require('fs').readdirSync;
 const RedisStore = require('connect-redis')(expressSession)
-const {get, isString, partial, pick} = require('lodash');
+const {get, partial} = require('lodash');
 
 const constant = require('./library/constant');
 const json = require('./library/json');
@@ -30,7 +30,6 @@ const error404 = {
 		message: 'NOT_FOUND'
 	}
 };
-
 
 function delegate(channel, message) {
 	const object = json.object(message);
@@ -54,63 +53,6 @@ function discover(type, array, value) {
 		});
 	}
 	return array;
-}
-
-function dispatch(level, flash) {
-	flash.forEach(message =>
-		logger[level](`${EXPRESS_HOST}.message`, message)
-	);
-}
-
-function message(request, response, next) {
-	Object.keys(logger).forEach(method => {
-		response.locals[method] = request.flash(method);
-	});
-    next();
-}
-
-function requestLogger(request, response, next) {
-	Object.keys(logger).forEach(method => {
-		if (response.locals[method].length) {
-			dispatch(method, response.locals[method]);
-		}
-	});
-	const method = isStatusRoute(request) ? 'debug' : 'info';
-	logger[method](`${EXPRESS_HOST}.request`, Object.assign(
-		pick(request, constant.LOGGER_WHITELIST_EXPRESS_REQUEST),
-		{body: JSON.stringify(request.body)}
-	));
-	next();
-}
-
-function isStatusRoute(request) {
-	return (request.path === '/status' || request.baseUrl === '/status');
-}
-
-function responseLogger(request, response, next) {
-	const send = response.send;
-	let called = false;
-	response.send = body => {
-		send.apply(response, [body]);
-		if (!called) {
-			called = true;
-			let method = 'info';
-			if (response.statusCode >= 500) {
-				method = 'error';
-			} else if (response.statusCode >= 400) {
-				method = 'warn';
-			}
-			if (isStatusRoute(request)) {
-				method = 'debug';
-			}
-			logger[method](`${EXPRESS_HOST}.response`, Object.assign(
-				{sessionID: request.sessionID},
-				pick(response, constant.LOGGER_WHITELIST_EXPRESS_RESPONSE),
-				{body}
-			));
-		}
-	};
-	next();
 }
 
 
@@ -139,10 +81,6 @@ service.use(expressSession({
 
 service.use(passport.initialize());
 service.use(passport.session());
-
-service.use(message);
-service.use(requestLogger);
-service.use(responseLogger);
 
 readdir(`${__dirname}/middleware`)
 .reduce(partial(discover, 'middleware'),  [])
