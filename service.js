@@ -24,10 +24,10 @@ const REDIS_HOST = process.env.REDIS_HOST || constant.REDIS_HOST;
 const REDIS_PORT = process.env.REDIS_PORT || constant.REDIS_PORT;
 const SESSION_SECRET = process.env.SESSION_SECRET || constant.SESSION_SECRET;
 
-const error404 = {
+const errorMethodNotAllowed = {
 	error: {
-		code: constant.HTTP_STATUS_NOT_FOUND,
-		message: 'NOT_FOUND'
+		code: constant.HTTP_STATUS_METHOD_NOT_ALLOWED,
+		message: 'METHOD_NOT_ALLOWED'
 	}
 };
 
@@ -91,8 +91,8 @@ readdir(`${__dirname}/route`)
 .forEach(route => service.use(`/${route.name}`, route.module));
 
 service.use('/', (request, response) => {
-	response.status(constant.HTTP_STATUS_NOT_FOUND);
-	response.send(error404);
+	response.status(constant.HTTP_STATUS_METHOD_NOT_ALLOWED);
+	response.send(errorMethodNotAllowed);
 });
 
 service.listen(EXPRESS_PORT, () => {
