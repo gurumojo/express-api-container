@@ -17,5 +17,16 @@
 	"HTTP_STATUS_REQUEST_TIMEOUT": 408,
 	"HTTP_STATUS_SERVICE_UNAVAILABLE": 503,
 	"HTTP_STATUS_UNAUTHORIZED": 401,
-	"SESSION_SECRET": "y0uRbl00Dt4st3Slik3$yruP"
+	"JWT_ALGORITHM": "HS512",
+	"JWT_AUDIENCE": "gurumojo.net",
+	"JWT_CLOCK_TOLERANCE": 0,
+	"JWT_EXPIRES_IN": "1h",
+	"JWT_ISSUER": "api.gurumojo.net",
+	"JWT_MAX_AGE": "1h",
+	"JWT_SECRET": "y0uRbl00Dt4st3Slik3$yruP",
+	"OAUTH_CLIENT_ID": "123-456-789",
+	"OAUTH_CLIENT_SECRET": "mRh4Ppyf4C3i$4W3S0M3",
+	"OAUTH_URL_AUTHORIZE": "https://api.gurumojo.net/oauth2/authorize",
+	"OAUTH_URL_CALLBACK": "https://api.gurumojo.net/auth/provider/callback",
+	"OAUTH_URL_TOKEN": "https://api.gurumojo.net/oauth2/token"
 }

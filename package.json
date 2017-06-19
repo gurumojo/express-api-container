@@ -18,10 +18,8 @@
   "homepage": "https://github.com/gurumojo/express-api-container#readme",
   "dependencies": {
     "body-parser": "^1.17.1",
-    "connect-flash": "^0.1.1",
-    "connect-redis": "^3.2.0",
     "express": "^4.15.2",
-    "express-session": "^1.15.2",
-    "lodash": "^4.17.4"
+    "lodash": "^4.17.4",
+    "passport-jwt": "^2.2.1"
   }
 }
