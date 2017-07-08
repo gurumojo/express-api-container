@@ -3,10 +3,13 @@ const process = require('process');
 const redis = require('redis');
 const {each, every, has, partial} = require('lodash');
 
+const constant = require('../constant');
 const json = require('../json');
 const logger = require('../logger');
+const network = require('../network');
 
-const host = process.env.REDIS_HOST;
+const host = constant.REDIS_HOST;
+const port = constant.REDIS_PORT;
 const registry = {};
 let service = null;
 const success = true;
@@ -27,6 +30,7 @@ function initialize() {
 	logger.debug('pubsub.initialize', {active: false});
 	if (!service) {
 		service = create('service');
+		logger.info(`pubsub.redis`, {host: json.string(network()), port});
 	}
 	each(registry, (object, channel, connection) => {
 		if (!connection[channel]) {
@@ -43,6 +47,7 @@ function create(channel) {
 	connection.on('error', partial(logger.error, `pubsub.${channel}`));
 	return connection;
 }
+
 
 function publish(channel, message) {
 	if (!registry[channel]) {

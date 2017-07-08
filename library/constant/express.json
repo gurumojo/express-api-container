@@ -24,6 +24,8 @@
 	"JWT_ISSUER": "api.gurumojo.net",
 	"JWT_MAX_AGE": "1h",
 	"JWT_SECRET": "y0uRbl00Dt4st3Slik3$yruP",
+	"JWT_REFRESH_RANGE": "30",
+	"JWT_REFRESH_UNIT": "m",
 	"OAUTH_CLIENT_ID": "123-456-789",
 	"OAUTH_CLIENT_SECRET": "mRh4Ppyf4C3i$4W3S0M3",
 	"OAUTH_URL_AUTHORIZE": "https://api.gurumojo.net/oauth2/authorize",

@@ -4,10 +4,10 @@
 		"flash",
 		"password",
 		"secret",
+		"sessionID",
 		"token"
 	],
 	"LOGGER_WHITELIST_EXPRESS_REQUEST": [
-		"sessionID",
 		"method",
 		"path",
 		"query",
@@ -15,7 +15,6 @@
 		"headers"
 	],
 	"LOGGER_WHITELIST_EXPRESS_RESPONSE": [
-		"sessionID",
 		"statusCode",
 		"body",
 		"headers"

@@ -1,7 +1,6 @@
 'use strict';
-const init = Date.now();
-
 const bodyParser = require('body-parser');
+const cores = require('os').cpus().length;
 const readdir = require('fs').readdirSync;
 const {get, partial} = require('lodash');
 
@@ -20,6 +19,7 @@ function defaultRoute(request, response) {
 	response.send({
 		error: {
 			code: constant.HTTP_STATUS_METHOD_NOT_ALLOWED,
+			description: 'The requested method is not allowed for this route.',
 			message: 'METHOD_NOT_ALLOWED'
 		}
 	});
@@ -36,8 +36,6 @@ function delegate(channel, message) {
 }
 
 
-logger.info(`${constant.EXPRESS_HOST}.init`, {timestamp: init});
-
 const service = router();
 
 service.use(passport.initialize());
@@ -48,7 +46,7 @@ discover(`${__dirname}/middleware`)
 discover(`${__dirname}/route`)
 .forEach(route => service.use(`/${route.name}`, require(route.module)));
 
-service.use('/', passport.authenticate('jwt', {session: false}), defaultRoute);
+service.use('/', passport.authenticate('jwt-access', {session: false}), defaultRoute);
 
 service.listen(constant.EXPRESS_PORT, () => {
 	logger.info(`${constant.EXPRESS_HOST}.listen`, {

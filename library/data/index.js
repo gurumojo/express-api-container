@@ -1,150 +1,154 @@
 'use strict';
-const init = Date.now();
-
 const Promise = require('bluebird');
-const cores = require('os').cpus().length;
+const postgres = require('pg-promise');
 const process = require('process');
-const redis = require('redis');
-const {isArray, isPlainObject, isString, pick, partial} = require('lodash');
 
+const json = require('../json');
 const logger = require('../logger');
+const network = require('../network');
 
-Promise.promisifyAll(redis.RedisClient.prototype); // direct execution
-Promise.promisifyAll(redis.Multi.prototype); // transactional execution
+const host = process.env.POSTGRES_HOST || 'localhost';
+const port = process.env.POSTGRES_PORT || 5432;
+const database = process.env.POSTGRES_DB || 'postgres';
+const user = process.env.POSTGRES_USER || 'postgres';
+const password = process.env.POSTGRES_PASSWORD || '';
 
-const host = process.env.REDIS_HOST || '127.0.0.1';
-const port = process.env.REDIS_PORT || 6379;
-const keepalive = {
-	delay: process.env.POLL_INTERVAL || 1000,
-	limit: process.env.POLL_TIMEOUT || 10000
+const options = {
+	capSQL: true,
+	//connect: _notify,
+	promiseLib: Promise,
+	//receive: _camelize
 };
-let db = null;
-let hold = false;
 
+const sql = {
+	createDatabase: (database) => `CREATE DATABASE ${database}`,
+	search: (table, column, value) => `SELECT * FROM ${table}
+		WHERE ${column} LIKE '%${value}%'`,
+	showDatabases: () => 'SELECT datname FROM pg_database',
+	showTables: () => `SELECT * FROM pg_catalog.pg_tables
+		WHERE schemaname NOT IN ('pg_catalog', 'information_schema')`
+};
+//return new postgres.ParameterizedQuery(`SELECT * FROM ${table} WHERE ${column} LIKE $1`)
+
+let db = null;
+let pool = null;
+
+
+function _camelize(data) {
+	const tmp = data[0];
+	for (let prop in tmp) {
+		const camel = postgres.utils.camelizeVar(prop);
+		if (!(camel in tmp)) {
+			for (let i = 0; i < data.length; i++) {
+				const d = data[i];
+				d[camel] = d[prop];
+				delete d[prop];
+			}
+		}
+	}
+}
+
+function _fail() {
+	return Promise.reject(new Error('no database connection'));
+}
+
+function _notify(client, context, fresh) {
+	if (fresh) {
+		logger.debug('data.notify', {context, fresh, client});
+		namespace();
+	}
+}
+
+
+function any(query, input) {
+	logger.debug('data.any', {query, input: json.string(input)});
+	return !db ? _fail() : db.any(query, input)
+	.tap(o => logger.debug('data.any', {result: json.string(o)}))
+	.catch(e => logger.error('data.any', {error: e.stack}));
+}
 
 function connect() {
-	logger.debug('data.connect', {active: false});
-	db = redis.createClient({host, port});
-	db.on('connect', connectionInfo);
-	db.on('error', error => {
-		logger.error('data.redis', error);
-		hold = false;
-	});
+	logger.info('data.postgres', {host: json.string(network()), port});
+	pool = postgres(options);
+	db = pool({host, port, user, password, database});
 }
 
-function connectionInfo() {
-	clearTimeout(keepalive.timeout);
-	clearInterval(keepalive.interval);
-	logger.info('data.redis', {host, port});
-	db.infoAsync('server')
-	.then(server => logger.debug('data.server', rewrite(server)));
-	db.infoAsync('keyspace')
-	.then(keys => logger.debug('data.keys', rewrite(keys)));
+function create(database) {
+	logger.info('data.create', {database});
+	return !db ? _fail() : db.none(sql.createDatabase(database))
+	.tap(x => logger.debug('data.create.result', {success: !x}))
+	.catch(e => logger.error('data.namespace', {error: e.stack}));
 }
 
-function fail() {
-	logger.error('data.fail', {host, port, timeout: 'redis.createClient'});
-	process.exit(1);
+function many(query, input) {
+	logger.debug('data.many', {query, input: json.string(input)});
+	return !db ? _fail() : db.many(query, input)
+	.tap(o => logger.debug('data.many', {result: json.string(o)}))
+	.catch(e => logger.error('data.many', {error: e.stack}));
 }
 
-function get(key) {
-	logger.debug('data.get', {key});
-	if (isString(key)) {
-		return db.hgetallAsync(key);
-	} else if (isArray(key)) {
-		return db.hgetAsync(key);
-	} else {
-		return Promise.reject(new Error('string | string[] input required'));
-	}
+function map(query, input, transform) {
+	logger.debug('data.map', {query, input: json.string(input)});
+	return !db ? _fail() : db.map(query, input, transform)
+	.tap(o => logger.debug('data.map', {result: json.string(o)}))
+	.catch(e => logger.error('data.map', {error: e.stack}));
 }
 
-function holdAndConnect() {
-	hold = true;
-	connect();
+function namespace() {
+	logger.debug('data.namespace', {query: sql.showDatabases()});
+	return !db ? _fail() : db.map(sql.showDatabases(), null, i => i.datname)
+	.tap(o => logger.debug('data.namespace', {databases: json.string(o)}))
+	.catch(e => logger.error('data.namespace', {error: e.stack}));
 }
 
-function keys(pattern) {
-	logger.debug('data.keys', {pattern});
-	if (isString(pattern)) {
-		return db.hkeysAsync(pattern);
-	} else {
-		return Promise.reject(new Error('string input required'));
-	}
+function none(query, input) {
+	logger.debug('data.none', {query, input: json.string(input)});
+	return !db ? _fail() : db.none(query, input)
+	.tap(x => logger.debug('data.none', {result: json.string(x)}))
+	.catch(e => logger.error('data.none', {error: e.stack}));
 }
 
-function poll(keepalive) {
-	if (!hold) {
-		holdAndConnect();
-	}
-	keepalive.timestamp = Date.now();
-	keepalive.uptime = keepalive.timestamp - init;
-	logger.debug('data.poll', pick(keepalive, ['delay', 'limit', 'timestamp', 'uptime']));
+function one(query, input) {
+	logger.debug('data.one', {query, input: json.string(input)});
+	return !db ? _fail() : db.one(query, input)
+	.tap(o => logger.debug('data.one', {result: json.string(o)}))
+	.catch(e => logger.error('data.one', {error: e.stack}));
 }
 
 function quit() {
-	db.quit();
+	pool.end();
 	db = null;
-	logger.info('data.connect', {timestamp: Date.now(), active: false});
+	logger.debug('data.postgres', {stopped: Date.now()});
 }
 
-function rewrite(item) {
-	if (isString(item)) {
-		return item
-		.replace(/\s/gm, ' ')
-		.replace(/# \w*  /, '')
-		.replace(/  /g, ', ')
-		.replace(/:/g, '=')
-		.replace(/,(\w)/g, (m, p1) => `, ${p1}`)
-		.replace(/, $/, '')
-	}
-	return item;
+function search(table, column, value) {
+	logger.info('data.search', {table, column, value});
+	return !db ? _fail() : db.any(sql.search(table, column), [value])
+	.tap(o => logger.debug('data.search.result', {input: value, output: json.string(o)}))
+	.catch(e => logger.error('data.search.result', {error: e.stack}));
 }
 
-function search(type, member, value) {
-	logger.debug('data.search', {type, member, value});
-	return db.keysAsync(`${type}:*`)
-	.then(hits => Promise.map(hits, target => get([target, member])
-		.then(item => (value === item ? get(target) : null))
-	));
-}
-
-function set(key, member, value) {
-	logger.debug('data.set', {key, member, value});
-	if (isString(member)) {
-		return db.hsetAsync(key, member, value);
-	} else if (isPlainObject(member)) {
-		return db.hmsetAsync(key, member);
-	} else {
-		return Promise.reject(new Error(
-			'(string, string, string) | (string, {string, ...}) input required'
-		));
-	}
-}
-
-function vals(key) {
-	logger.debug('data.vals', {key});
-	if (isString(key)) {
-		return db.hvalsAsync(key);
-	} else {
-		return Promise.reject(new Error('string input required'));
-	}
+function status() {
+	logger.debug('data.status', {connected: !!db});
+	return !db ? _fail() : db.any(sql.showTables())
+	.tap(o => logger.debug('data.status', {tables: json.string(o)}))
+	.catch(e => logger.error('data.status', {error: e.stack}));
 }
 
 
-if (host) {
-	keepalive.interval = setInterval(poll, keepalive.delay, keepalive);
-    keepalive.timeout = setTimeout(fail, keepalive.limit);
-} else {
-	logger.error('data.init', {required: 'process.env.REDIS_HOST'});
-}
+connect();
 
 
 module.exports = {
+	any,
 	connect,
-	get,
-	keys,
+	create,
+	many,
+	map,
+	namespace,
+	none,
+	one,
 	quit,
 	search,
-	set,
-	vals
+	status
 };

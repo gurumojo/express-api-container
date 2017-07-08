@@ -10,9 +10,8 @@ const options = {
 
 
 function decode(token) {
-	const object = jwt.decode(token, options);
-	logger.debug(`${constant.EXPRESS_HOST}.token.decode`, object);
-	return object;
+	return jwt.decode(token, options);
 }
+
 
 module.exports = decode;

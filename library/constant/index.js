@@ -1,6 +1,7 @@
 'use strict';
 const express = require('./express');
 const logger = require('./logger');
+const postgres = require('./postgres');
 const redis = require('./redis');
 
 const environment = process.env.NODE_ENV || 'development';
@@ -15,6 +16,7 @@ module.exports = Object.freeze(Object.assign(
 	},
 	express,
 	logger,
+	postgres,
 	redis,
 	override
 ));

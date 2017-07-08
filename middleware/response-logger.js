@@ -4,7 +4,6 @@ const {pick} = require('lodash');
 const constant = require('../library/constant');
 const logger = require('../library/logger');
 
-const EXPRESS_HOST = process.env.EXPRESS_HOST || constant.EXPRESS_HOST;
 
 function isStatusRoute(request) {
 	return (request.path === '/status' || request.baseUrl === '/status');
@@ -26,8 +25,7 @@ function responseLogger(request, response, next) {
 			if (isStatusRoute(request)) {
 				method = 'debug';
 			}
-			logger[method](`${EXPRESS_HOST}.response`, Object.assign(
-				{sessionID: request.sessionID},
+			logger[method](`${constant.EXPRESS_HOST}.response`, Object.assign(
 				pick(response, constant.LOGGER_WHITELIST_EXPRESS_RESPONSE),
 				{body}
 			));
@@ -35,5 +33,6 @@ function responseLogger(request, response, next) {
 	};
 	next();
 }
+
 
 module.exports = responseLogger;

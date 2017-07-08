@@ -12,12 +12,15 @@ const options = {
 	maxAge: constant.JWT_MAX_AGE
 };
 
-
 function verify(token) {
-	logger.debug(`${constant.EXPRESS_HOST}.token.verify`, {
-		token: jwt.decode(token, {complete: true})
-	});
-	return jwt.verify(token, constant.JWT_SECRET, options);
+	let verified = null;
+	try {
+		verified = jwt.verify(token, constant.JWT_SECRET, options);
+		logger.debug(`${constant.EXPRESS_HOST}.token.verify`, {verified: !!verified});
+	} catch (x) {
+		logger.warn(`${constant.EXPRESS_HOST}.token.verify`, {failure: x.message});
+	}
+	return verified;
 }
 
 module.exports = verify;

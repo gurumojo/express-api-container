@@ -1,0 +1,4 @@
+{
+	"POSTGRES_HOST": "0.0.0.0",
+	"POSTGRES_PORT": 5432
+}

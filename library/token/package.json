@@ -14,8 +14,8 @@
     "lodash": "^4.16.6",
     "passport": "^0.3.2",
     "passport-http-bearer": "^1.0.1",
-    "passport-jwt": "^2.2.1",
     "passport-local": "^1.0.0",
-    "passport-oauth": "^1.0.0"
+    "passport-oauth": "^1.0.0",
+    "passport-strategy": "^1.0.0"
   }
 }

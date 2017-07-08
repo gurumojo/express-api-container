@@ -1,78 +1,75 @@
 'use strict';
-const BearerStrategy = require('passport-http-bearer').Strategy;
-const JWT = require('passport-jwt');
-const LocalStrategy = require('passport-local').Strategy;
-const OAuth2Strategy = require('passport-oauth').OAuth2Strategy;
 const crypto = require('crypto');
 const passport = require('passport');
-const {compact, get, omit, partial} = require('lodash');
+const {compact, get, isPlainObject, omit, partial} = require('lodash');
 
 const constant = require('../constant');
 const data = require('../data');
+const json = require('../json');
 const logger = require('../logger');
 
-const SALT_BYTES = 16;
+const {
+	JWTAccessStrategy,
+	JWTRefreshStrategy,
+	LocalStrategy
+} = require('./strategy');
+
 const HASH_BYTES = 32;
+const HASH_TYPE = 'sha256WithRSAEncryption';
 const ITERATIONS = 20000;
+const SALT_BYTES = 16;
 
-const bearerConfig = {
+const strategyConfig = {
 	passReqToCallback: true
-};
-
-const jwtConfig = {
-	algorithms: [constant.JWT_ALGORITHM],
-	audience: constant.JWT_AUDIENCE,
-	issuer: constant.JWT_ISSUER,
-	jwtFromRequest: JWT.ExtractJwt.fromAuthHeader(),
-	passReqToCallback: true,
-	secretOrKey: constant.JWT_SECRET
-};
-
-const localConfig = {
-	passReqToCallback: true
-};
-
-const oauthConfig = {
-	authorizationURL: constant.OAUTH_URL_AUTHORIZE,
-	callbackURL: constant.OAUTH_URL_CALLBACK,
-	clientID: constant.OAUTH_CLIENT_ID,
-	clientSecret: constant.OAUTH_CLIENT_SECRET,
-	passReqToCallback: true,
-	tokenURL: constant.OAUTH_URL_TOKEN
 };
 
 
 function errorHandler(request, done, error) {
-	logger.error(`${constant.EXPRESS_HOST}.token`, {error});
-	logger.debug(`${constant.EXPRESS_HOST}.token`, request.res.locals);
-	done(error, false);
+	logger.error(`${constant.EXPRESS_HOST}.token.passport`, {error});
+	done(error, false, request);
 }
 
 function failureHandler(request, done, failure) {
-	logger.warn(`${constant.EXPRESS_HOST}.token`, {failure});
-	logger.debug(`${constant.EXPRESS_HOST}.token`, request.res.locals);
-	done(null, false);
+	logger.warn(`${constant.EXPRESS_HOST}.token.passport`, {failure});
+	done(null, false, request);
 }
 
 function successHandler(request, done, success) {
-	logger.info(`${constant.EXPRESS_HOST}.token`, {success});
-	done(null, success);
+	logger.info(`${constant.EXPRESS_HOST}.token.passport`, {success});
+	done(null, success, request);
 }
 
 
-function bearerVerify(request, token, done) {
-	logger.info(`${constant.EXPRESS_HOST}.token`, {verify: 'bearer', token});
-	done(null, {token});
+function jwtAccessVerify(request, payload, done) {
+	logger.debug(`${constant.EXPRESS_HOST}.token.passport.jwt`, {verify: 'access'});
+	const client = get(payload, 'sub');
+	const user = get(payload, 'jai');
+	if (isPlainObject(client) && isPlainObject(user)) {
+		successHandler(request, done, user);
+	} else {
+		failureHandler(request, done, {
+			message: 'malformed token',
+			payload: json.string({client, user}),
+			required: '{jai, sub}'
+		});
+	}
 }
 
-function jwtVerify(request, token, done) {
-	logger.info(`${constant.EXPRESS_HOST}.token`, {verify: 'jwt', token});
-	done();
+function jwtRefreshVerify(request, payload, done) {
+	logger.info(`${constant.EXPRESS_HOST}.token.passport.jwt`, {verify: 'refresh'});
+	const client = get(payload, 'sub');
+	const user = get(payload, 'jri');
+	if (isPlainObject(client) && isPlainObject(user)) {
+		data.one('SELECT * FROM user WHERE id = $1', [user.id])
+		.then(partial(successHandler, request, done))
+		.catch(partial(errorHandler, request, done));
+	} else {
+		failureHandler(request, done, {message: 'malformed token payload', payload});
+	}
 }
 
 function hash(password, salt, iterations) {
-	// see https://nakedsecurity.sophos.com/2013/11/20/serious-security-how-to-store-your-users-passwords-safely/
-	return crypto.pbkdf2Sync(password, salt, iterations, HASH_BYTES, 'sha256WithRSAEncryption').toString('hex');
+	return crypto.pbkdf2Sync(password, salt, iterations, HASH_BYTES, HASH_TYPE).toString('hex');
 }
 
 function localValidate(request, done, user, password, secret) {
@@ -99,27 +96,9 @@ function localVerify(request, username, password, done) {
 	.catch(partial(errorHandler, request, done));
 }
 
-function oauthVerify(request, accessToken, refreshToken, profile, done) {
-	logger.info(`${constant.EXPRESS_HOST}.token`, {verify: 'oauth', profile});
-	done(null, {accessToken, refreshToken, profile});
-}
 
-
-function serialize(user, done) {
-	done(null, get(user, 'id'));
-}
-
-function deserialize(id, done) {
-	data.get(`user:${id}`)
-	.then(user => done(null, user));
-}
-
-passport.use(new JWT.Strategy(jwtConfig, jwtVerify));
-passport.use(new LocalStrategy(localConfig, localVerify));
-passport.use(new BearerStrategy(bearerConfig, bearerVerify));
-passport.use(new OAuth2Strategy(oauthConfig, oauthVerify));
-
-passport.serializeUser(serialize);
-passport.deserializeUser(deserialize);
+passport.use(new JWTAccessStrategy(strategyConfig, jwtAccessVerify));
+passport.use(new JWTRefreshStrategy(strategyConfig, jwtRefreshVerify));
+passport.use(new LocalStrategy(strategyConfig, localVerify));
 
 module.exports = passport;
