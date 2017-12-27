@@ -11,18 +11,12 @@ const logger = require('./library/logger');
 const network = require('./library/network');
 const pubsub = require('./library/pubsub');
 const router = require('./library/router');
+const status = require('./library/status');
 const {passport} = require('./library/token');
 
 
 function defaultRoute(request, response) {
-	response.status(constant.HTTP_STATUS_METHOD_NOT_ALLOWED);
-	response.send({
-		error: {
-			code: constant.HTTP_STATUS_METHOD_NOT_ALLOWED,
-			description: 'The requested method is not allowed for this route.',
-			message: 'METHOD_NOT_ALLOWED'
-		}
-	});
+	response.status(constant.HTTP_STATUS_METHOD_NOT_ALLOWED).send(status.methodNotAllowed);
 }
 
 function delegate(channel, message) {

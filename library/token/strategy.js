@@ -10,27 +10,12 @@ const {pick} = require('lodash');
 const constant = require('../constant');
 const json = require('../json');
 const logger = require('../logger');
+const status = require('../status');
 
 const decode = require('./decode');
 const sign = require('./sign');
 const validate = require('./validate');
 const verify = require('./verify');
-
-const badRequest = {
-	error: {
-		code: constant.HTTP_STATUS_BAD_REQUEST,
-		description: 'The request was malformed. Consult API documentation for help.',
-		message: 'BAD_REQUEST'
-	}
-};
-
-const unauthorized = {
-	error: {
-		code: constant.HTTP_STATUS_UNAUTHORIZED,
-		description: 'This request was blocked for insufficient authority.',
-		message: 'UNAUTHORIZED'
-	}
-};
 
 const JWT_OPTIONS = [
 	'algorithms',
@@ -73,10 +58,10 @@ class JWTAccessStrategy extends Strategy {
 		logger.debug(`${constant.EXPRESS_HOST}.token.strategy.access`,
 			{jwt: json.string({options, scheme, validated, verified})});
 		if (!validated) {
-			request.res.status(constant.HTTP_STATUS_BAD_REQUEST).send(badRequest);
+			request.res.status(constant.HTTP_STATUS_BAD_REQUEST).send(status.badRequest);
 		} else {
 			if (!verified) {
-				request.res.status(constant.HTTP_STATUS_UNAUTHORIZED).send(unauthorized);
+				request.res.status(constant.HTTP_STATUS_UNAUTHORIZED).send(status.unauthorized);
 			} else {
 				if (this.passReqToCallback) {
 					this.verify(request, pick(verified, JWT_PAYLOAD), this.done.bind(this));
@@ -89,11 +74,11 @@ class JWTAccessStrategy extends Strategy {
 
 	done(error, payload, request) {
 		if (error) {
-			request ? request.res.status(constant.HTTP_STATUS_BAD_REQUEST).send(badRequest)
+			request ? request.res.status(constant.HTTP_STATUS_BAD_REQUEST).send(status.badRequest)
 				: this.fail(constant.HTTP_STATUS_BAD_REQUEST);
 		} else {
 			if (!payload) {
-				request ? request.res.status(constant.HTTP_STATUS_UNAUTHORIZED).send(unauthorized)
+				request ? request.res.status(constant.HTTP_STATUS_UNAUTHORIZED).send(status.unauthorized)
 					: this.fail(constant.HTTP_STATUS_UNAUTHORIZED);
 			} else {
 				this.success(payload);
