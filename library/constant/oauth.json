@@ -1,0 +1,7 @@
+{
+	"OAUTH_CLIENT_ID": "123-456-789",
+	"OAUTH_CLIENT_SECRET": "mRh4Ppyf4C3i$4W3S0M3",
+	"OAUTH_URL_AUTHORIZE": "https://api.gurumojo.net/oauth2/authorize",
+	"OAUTH_URL_CALLBACK": "https://api.gurumojo.net/auth/provider/callback",
+	"OAUTH_URL_TOKEN": "https://api.gurumojo.net/oauth2/token"
+}
