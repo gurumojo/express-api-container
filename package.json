@@ -2,23 +2,23 @@
   "name": "express-api-container",
   "version": "0.0.0",
   "description": "Docker Container for Express API Service",
-  "main": "service.js",
-  "scripts": {
-    "test": "echo 'Error: no test specified' && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/gurumojo/express-api-container.git"
-  },
   "author": "theguy@gurumojo.net",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/gurumojo/express-api-container/issues"
   },
-  "homepage": "https://github.com/gurumojo/express-api-container#readme",
   "dependencies": {
     "body-parser": "^1.17.1",
     "express": "^4.15.2",
     "lodash": "^4.17.4"
+  },
+  "homepage": "https://github.com/gurumojo/express-api-container#readme",
+  "license": "ISC",
+  "main": "service.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gurumojo/express-api-container.git"
+  },
+  "scripts": {
+    "test": "echo 'Error: no test specified' && exit 1"
   }
 }

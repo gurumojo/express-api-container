@@ -22,7 +22,7 @@ function inspect(path, accumulator, value) {
 }
 
 function register(path, accumulator, value) {
-	const name = value.split('.')[0];
+	const name = value.split('.').slice(0, -1).join('.');
 	logger.debug(`${constant.EXPRESS_HOST}.discover.register`, {name});
 	accumulator.push({
 		module: `${path}/${name}`,

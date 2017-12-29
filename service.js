@@ -15,10 +15,6 @@ const status = require('./library/status');
 const {passport} = require('./library/token');
 
 
-function defaultRoute(request, response) {
-	response.status(constant.HTTP_STATUS_METHOD_NOT_ALLOWED).send(status.methodNotAllowed);
-}
-
 function delegate(channel, message) {
 	const object = json.object(message);
 	if (get(object, 'error')) {
@@ -27,6 +23,16 @@ function delegate(channel, message) {
 	if (!get(object, 'subscribe')) {
 		logger.info(`${constant.EXPRESS_HOST}.delegate`, object);
 	}
+}
+
+function derelict(request, response) {
+	response.status(constant.HTTP_STATUS_METHOD_NOT_ALLOWED).send(status.methodNotAllowed);
+}
+
+function guard(route) {
+	return route.secure
+	  ? passport.authenticate('jwt-access', {session: false})
+	  : (request, response, next) => next();
 }
 
 
@@ -38,9 +44,9 @@ discover(`${__dirname}/middleware`)
 .forEach(middleware => service.use(require(middleware.module)));
 
 discover(`${__dirname}/route`)
-.forEach(route => service.use(`/${route.name}`, require(route.module)));
+.forEach(route => service.use(`/${route.name}`, guard(route.name), require(route.module)));
 
-service.use('/', passport.authenticate('jwt-access', {session: false}), defaultRoute);
+service.use('/', guard({secure: true}), derelict);
 
 service.listen(constant.EXPRESS_PORT, () => {
 	logger.info(`${constant.EXPRESS_HOST}.listen`, {

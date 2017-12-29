@@ -1,8 +1,5 @@
 'use strict';
-const status = require('express')();
-
-status.disable('etag');
-status.disable('x-powered-by');
+const status = require('../library/router')();
 
 status.get('/', (request, response) => {
 	response.send({status: 'OK'});
