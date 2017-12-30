@@ -6,7 +6,6 @@ const {each, every, has, partial} = require('lodash');
 const constant = require('../constant');
 const json = require('../json');
 const logger = require('../logger');
-const network = require('../network');
 
 const host = constant.REDIS_HOST;
 const port = constant.REDIS_PORT;
@@ -30,7 +29,7 @@ function initialize() {
 	logger.debug('pubsub.initialize', {active: false});
 	if (!service) {
 		service = create('service');
-		logger.info(`pubsub.redis`, {host: json.string(network()), port});
+		logger.info(`pubsub.redis`, {host, port});
 	}
 	each(registry, (object, channel, connection) => {
 		if (!connection[channel]) {

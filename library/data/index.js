@@ -3,15 +3,15 @@ const Promise = require('bluebird');
 const postgres = require('pg-promise');
 const process = require('process');
 
+const constant = require('../constant');
 const json = require('../json');
 const logger = require('../logger');
-const network = require('../network');
 
-const host = process.env.POSTGRES_HOST || 'localhost';
-const port = process.env.POSTGRES_PORT || 5432;
-const database = process.env.POSTGRES_DB || 'postgres';
-const user = process.env.POSTGRES_USER || 'postgres';
-const password = process.env.POSTGRES_PASSWORD || '';
+const host = constant.POSTGRES_HOST;
+const port = constant.POSTGRES_PORT;
+const database = constant.POSTGRES_DB;
+const user = constant.POSTGRES_USER;
+const password = constant.POSTGRES_PASSWORD;
 
 const options = {
 	capSQL: true,
@@ -68,7 +68,7 @@ function any(query, input) {
 }
 
 function connect() {
-	logger.info('data.postgres', {host: json.string(network()), port});
+	logger.info('data.postgres', {host, port});
 	pool = postgres(options);
 	db = pool({host, port, user, password, database});
 }
