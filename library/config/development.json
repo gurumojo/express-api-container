@@ -1,0 +1,11 @@
+{
+	"jwt": {
+		"secret": ""
+	},
+	"postgres": {
+		"secret": ""
+	},
+	"redis": {
+		"secret": ""
+	}
+}

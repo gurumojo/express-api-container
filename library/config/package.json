@@ -1,7 +1,7 @@
 {
-  "name": "constant",
+  "name": "config",
   "version": "0.0.0",
-  "description": "application environment constants",
+  "description": "configurable application environment values",
   "main": "index.js",
   "scripts": {
     "test": "echo 'Error: no test specified' && exit 1"

@@ -10,7 +10,7 @@ const postgres = require('./postgres');
 const redis = require('./redis');
 
 const environment = process.env.NODE_ENV || 'development';
-const context = require(`./${environment}`);
+const context = require(`../config/${environment}`);
 
 const staticConfig = Object.assign(
 	{
