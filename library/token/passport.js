@@ -3,10 +3,12 @@ const crypto = require('crypto');
 const passport = require('passport');
 const {compact, get, isPlainObject, omit, partial} = require('lodash');
 
-const constant = require('../constant');
 const data = require('../data');
 const json = require('../json');
 const logger = require('../logger');
+const {API_NAME} = require('../constant');
+
+const namespace = `${API_NAME}.token.passport`;
 
 const {
 	JWTAccessStrategy,
@@ -25,23 +27,23 @@ const strategyConfig = {
 
 
 function errorHandler(request, done, error) {
-	logger.error(`${constant.EXPRESS_HOST}.token.passport`, {error});
+	logger.error(namespace, {error});
 	done(error, false, request);
 }
 
 function failureHandler(request, done, failure) {
-	logger.warn(`${constant.EXPRESS_HOST}.token.passport`, {failure});
+	logger.warn(namespace, {failure});
 	done(null, false, request);
 }
 
 function successHandler(request, done, success) {
-	logger.info(`${constant.EXPRESS_HOST}.token.passport`, {success});
+	logger.info(namespace, {success});
 	done(null, success, request);
 }
 
 
 function jwtAccessVerify(request, payload, done) {
-	logger.debug(`${constant.EXPRESS_HOST}.token.passport.jwt`, {verify: 'access'});
+	logger.debug(`${namespace}.jwt.access`, {verify: 'access'});
 	const client = get(payload, 'sub');
 	const user = get(payload, 'jai');
 	if (isPlainObject(client) && isPlainObject(user)) {
@@ -56,7 +58,7 @@ function jwtAccessVerify(request, payload, done) {
 }
 
 function jwtRefreshVerify(request, payload, done) {
-	logger.info(`${constant.EXPRESS_HOST}.token.passport.jwt`, {verify: 'refresh'});
+	logger.info(`${namespace}.jwt.refresh`, {verify: 'refresh'});
 	const client = get(payload, 'sub');
 	const user = get(payload, 'jri');
 	if (isPlainObject(client) && isPlainObject(user)) {
@@ -81,7 +83,7 @@ function localValidate(request, done, user, password, secret) {
 }
 
 function localVerify(request, username, password, done) {
-	logger.info(`${constant.EXPRESS_HOST}.token`, {verify: 'local', username});
+	logger.info(`${namespace}.local`, {verify: 'local', username});
 	data.search('user', 'handle', username)
 	.then(result => {
 		const user = compact(result).pop();

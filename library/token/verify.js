@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const constant = require('../constant');
 const logger = require('../logger');
 
+const namespace = `${constant.API_NAME}.token.verify`;
+
 const options = {
 	algorithms: [constant.JWT_ALGORITHM],
 	audience: constant.JWT_AUDIENCE,
@@ -16,9 +18,9 @@ function verify(token) {
 	let verified = null;
 	try {
 		verified = jwt.verify(token, constant.JWT_SECRET, options);
-		logger.debug(`${constant.EXPRESS_HOST}.token.verify`, {verified: !!verified});
+		logger.debug(namespace, {verified: !!verified});
 	} catch (x) {
-		logger.warn(`${constant.EXPRESS_HOST}.token.verify`, {failure: x.message});
+		logger.warn(namespace, {failure: x.message});
 	}
 	return verified;
 }

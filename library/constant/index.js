@@ -1,6 +1,4 @@
 'use strict';
-const hostname = require('os').hostname();
-
 const express = require('./express');
 const http = require('./http');
 const jwt = require('./jwt');
@@ -9,13 +7,16 @@ const oauth = require('./oauth');
 const postgres = require('./postgres');
 const redis = require('./redis');
 
-const environment = process.env.NODE_ENV || 'development';
-const context = require(`../config/${environment}`);
+const API_NAME = process.env.API_NAME || 'api';
+const HOSTNAME = require('os').hostname();
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const environment = require(`../config/${NODE_ENV}`);
 
 const staticConfig = Object.assign(
 	{
-		environment,
-		hostname
+		API_NAME,
+		HOSTNAME,
+		NODE_ENV
 	},
 	express,
 	http,
@@ -24,10 +25,11 @@ const staticConfig = Object.assign(
 	oauth,
 	postgres,
 	redis,
-	context
+	environment
 );
 
 const runtimeConfig = [
+	'API_NAME',
 	'EXPRESS_HOST',
 	'EXPRESS_PORT',
 	'JWT_CLOCK_TOLERANCE',

@@ -1,11 +1,13 @@
 'use strict';
-const constant = require('../library/constant');
 const data = require('../library/data');
 const logger = require('../library/logger');
+const {API_NAME} = require('../library/constant');
+
+const namespace = `${API_NAME}.request.data`;
 
 
 function requestData(request, response, next) {
-	logger.debug(`${constant.EXPRESS_HOST}.request.data`, {attached: true});
+	logger.debug(namespace, {attached: true});
 	request.data = data;
 	next();
 }

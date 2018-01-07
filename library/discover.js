@@ -2,19 +2,21 @@
 const readdir = require('fs').readdirSync;
 const {partial} = require('lodash');
 
-const constant = require('./constant');
 const logger = require('./logger');
+const {API_NAME} = require('./constant');
 
 const blacklist = /index.js|node_modules|package.json|yarn.lock/;
 
+const namespace = `${API_NAME}.discover`;
+
 
 function discover(path) {
-	logger.debug(`${constant.EXPRESS_HOST}.discover`, {path});
+	logger.debug(namespace, {path});
 	return readdir(path).reduce(partial(inspect, path),  []);
 }
 
 function inspect(path, accumulator, value) {
-	logger.debug(`${constant.EXPRESS_HOST}.discover.inspect`, {value});
+	logger.debug(`${namespace}.inspect`, {value});
 	if (value.indexOf('.') !== 0 && !value.match(blacklist)) {
 		register(path, accumulator, value);
 	}
@@ -23,7 +25,7 @@ function inspect(path, accumulator, value) {
 
 function register(path, accumulator, value) {
 	const name = value.split('.').slice(0, -1).join('.');
-	logger.debug(`${constant.EXPRESS_HOST}.discover.register`, {name});
+	logger.debug(`${namespace}.register`, {name});
 	accumulator.push({
 		module: `${path}/${name}`,
 		name,

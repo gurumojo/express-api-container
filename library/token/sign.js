@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const constant = require('../constant');
 const logger = require('../logger');
 
+const namespace = `${constant.API_NAME}.token.sign`;
+
 const options = {
 	algorithm: constant.JWT_ALGORITHM,
 	audience: constant.JWT_AUDIENCE,
@@ -13,12 +15,12 @@ const options = {
 
 
 function sign(payload) {
-	logger.debug(`${constant.EXPRESS_HOST}.token.sign`, {payload, options});
+	logger.debug(namespace, {payload, options});
 	let signed = null;
 	try {
 		signed = jwt.sign(payload, constant.JWT_SECRET, options);
 	} catch (x) {
-		logger.warn(`${constant.EXPRESS_HOST}.token.sign`, {failure: x.message});
+		logger.warn(namespace, {failure: x.message});
 	}
 	return signed;
 }

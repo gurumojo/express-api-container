@@ -14,14 +14,16 @@ const router = require('./library/router');
 const status = require('./library/status');
 const {passport} = require('./library/token');
 
+const namespace = `${constant.API_NAME}`;
+
 
 function delegate(channel, message) {
 	const object = json.object(message);
 	if (get(object, 'error')) {
-		logger.error(`${constant.EXPRESS_HOST}.delegate`, error);
+		logger.error(`${namespace}.delegate`, error);
 	}
 	if (!get(object, 'subscribe')) {
-		logger.info(`${constant.EXPRESS_HOST}.delegate`, object);
+		logger.info(`${namespace}.delegate`, object);
 	}
 }
 
@@ -44,14 +46,14 @@ discover(`${__dirname}/middleware`)
 .forEach(middleware => service.use(require(middleware.module)));
 
 discover(`${__dirname}/route`)
-.forEach(route => service.use(`/${route.name}`, guard(route.name), require(route.module)));
+.forEach(route => service.use(`/${route.name}`, guard(route), require(route.module)));
 
 service.use('/', guard({secure: true}), derelict);
 
 service.listen(constant.EXPRESS_PORT, () => {
-	logger.info(`${constant.EXPRESS_HOST}.listen`, {
+	logger.info(`${namespace}.listen`, {
 		host: json.string(network()),
 		port: constant.EXPRESS_PORT
 	});
-	pubsub.subscribe(constant.EXPRESS_HOST, delegate);
+	pubsub.subscribe(namespace, delegate);
 });

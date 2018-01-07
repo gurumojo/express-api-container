@@ -4,6 +4,8 @@ const constant = require('../constant');
 const json = require('../json');
 const logger = require('../logger');
 
+const namespace = `${constant.API_NAME}.token.validate`;
+
 function inspect(jwt) {
 	if (jwt.header.typ !== 'JWT') {
 		throw new Error('JWT input type required');
@@ -24,9 +26,9 @@ function validate(jwt) {
 	try {
 		inspect(jwt);
 		valid = true;
-		logger.debug(`${constant.EXPRESS_HOST}.token.validate`, {valid});
+		logger.debug(namespace, {valid});
 	} catch (x) {
-		logger.warn(`${constant.EXPRESS_HOST}.token.validate`, {failure: x.message});
+		logger.warn(namespace, {failure: x.message});
 	}
 	return valid;
 }

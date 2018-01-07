@@ -7,6 +7,8 @@ const constant = require('../constant');
 const json = require('../json');
 const logger = require('../logger');
 
+const namespace = `${constant.API_NAME}.data`;
+
 const host = constant.POSTGRES_HOST;
 const port = constant.POSTGRES_PORT;
 const database = constant.POSTGRES_DB;
@@ -54,85 +56,85 @@ function _fail() {
 
 function _notify(client, context, fresh) {
 	if (fresh) {
-		logger.debug('data.notify', {context, fresh, client});
-		namespace();
+		logger.debug(`${namespace}.notify`, {context, fresh, client});
+		list();
 	}
 }
 
 
 function any(query, input) {
-	logger.debug('data.any', {query, input: json.string(input)});
+	logger.debug(`${namespace}.any`, {query, input: json.string(input)});
 	return !db ? _fail() : db.any(query, input)
-	.tap(o => logger.debug('data.any', {result: json.string(o)}))
-	.catch(e => logger.error('data.any', {error: e.stack}));
+	.tap(o => logger.debug(`${namespace}.any`, {result: json.string(o)}))
+	.catch(e => logger.error(`${namespace}.any`, {error: e.stack}));
 }
 
 function connect() {
-	logger.info('data.postgres', {host, port});
+	logger.info(`${namespace}.postgres`, {host, port});
 	pool = postgres(options);
 	db = pool({host, port, user, password, database});
 }
 
 function create(database) {
-	logger.info('data.create', {database});
+	logger.info(`${namespace}.create`, {database});
 	return !db ? _fail() : db.none(sql.createDatabase(database))
-	.tap(x => logger.debug('data.create.result', {success: !x}))
-	.catch(e => logger.error('data.namespace', {error: e.stack}));
+	.tap(x => logger.debug(`${namespace}.create`, {success: !x}))
+	.catch(e => logger.error(`${namespace}.create`, {error: e.stack}));
+}
+
+function list() {
+	logger.debug(`${namespace}.namespace`, {query: sql.showDatabases()});
+	return !db ? _fail() : db.map(sql.showDatabases(), null, i => i.datname)
+	.tap(o => logger.debug(`${namespace}.namespace`, {databases: json.string(o)}))
+	.catch(e => logger.error(`${namespace}.namespace`, {error: e.stack}));
 }
 
 function many(query, input) {
-	logger.debug('data.many', {query, input: json.string(input)});
+	logger.debug(`${namespace}.many`, {query, input: json.string(input)});
 	return !db ? _fail() : db.many(query, input)
-	.tap(o => logger.debug('data.many', {result: json.string(o)}))
-	.catch(e => logger.error('data.many', {error: e.stack}));
+	.tap(o => logger.debug(`${namespace}.many`, {result: json.string(o)}))
+	.catch(e => logger.error(`${namespace}.many`, {error: e.stack}));
 }
 
 function map(query, input, transform) {
-	logger.debug('data.map', {query, input: json.string(input)});
+	logger.debug(`${namespace}.map`, {query, input: json.string(input)});
 	return !db ? _fail() : db.map(query, input, transform)
-	.tap(o => logger.debug('data.map', {result: json.string(o)}))
-	.catch(e => logger.error('data.map', {error: e.stack}));
-}
-
-function namespace() {
-	logger.debug('data.namespace', {query: sql.showDatabases()});
-	return !db ? _fail() : db.map(sql.showDatabases(), null, i => i.datname)
-	.tap(o => logger.debug('data.namespace', {databases: json.string(o)}))
-	.catch(e => logger.error('data.namespace', {error: e.stack}));
+	.tap(o => logger.debug(`${namespace}.map`, {result: json.string(o)}))
+	.catch(e => logger.error(`${namespace}.map`, {error: e.stack}));
 }
 
 function none(query, input) {
-	logger.debug('data.none', {query, input: json.string(input)});
+	logger.debug(`${namespace}.none`, {query, input: json.string(input)});
 	return !db ? _fail() : db.none(query, input)
-	.tap(x => logger.debug('data.none', {result: json.string(x)}))
-	.catch(e => logger.error('data.none', {error: e.stack}));
+	.tap(x => logger.debug(`${namespace}.none`, {result: json.string(x)}))
+	.catch(e => logger.error(`${namespace}.none`, {error: e.stack}));
 }
 
 function one(query, input) {
-	logger.debug('data.one', {query, input: json.string(input)});
+	logger.debug(`${namespace}.one`, {query, input: json.string(input)});
 	return !db ? _fail() : db.one(query, input)
-	.tap(o => logger.debug('data.one', {result: json.string(o)}))
-	.catch(e => logger.error('data.one', {error: e.stack}));
+	.tap(o => logger.debug(`${namespace}.one`, {result: json.string(o)}))
+	.catch(e => logger.error(`${namespace}.one`, {error: e.stack}));
 }
 
 function quit() {
 	pool.end();
 	db = null;
-	logger.debug('data.postgres', {stopped: Date.now()});
+	logger.debug(`${namespace}.postgres`, {stopped: Date.now()});
 }
 
 function search(table, column, value) {
-	logger.info('data.search', {table, column, value});
+	logger.info(`${namespace}.search`, {table, column, value});
 	return !db ? _fail() : db.any(sql.search(table, column), [value])
-	.tap(o => logger.debug('data.search.result', {input: value, output: json.string(o)}))
-	.catch(e => logger.error('data.search.result', {error: e.stack}));
+	.tap(o => logger.debug(`${namespace}.search`, {input: value, output: json.string(o)}))
+	.catch(e => logger.error(`${namespace}.search`, {error: e.stack}));
 }
 
 function status() {
-	logger.debug('data.status', {connected: !!db});
+	logger.debug(`${namespace}.status`, {connected: !!db});
 	return !db ? _fail() : db.any(sql.showTables())
-	.tap(o => logger.debug('data.status', {tables: json.string(o)}))
-	.catch(e => logger.error('data.status', {error: e.stack}));
+	.tap(o => logger.debug(`${namespace}.status`, {tables: json.string(o)}))
+	.catch(e => logger.error(`${namespace}.status`, {error: e.stack}));
 }
 
 
@@ -143,9 +145,9 @@ module.exports = {
 	any,
 	connect,
 	create,
+	list,
 	many,
 	map,
-	namespace,
 	none,
 	one,
 	quit,

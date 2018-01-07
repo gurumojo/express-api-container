@@ -17,6 +17,8 @@ const sign = require('./sign');
 const validate = require('./validate');
 const verify = require('./verify');
 
+const namespace = `${constant.API_NAME}.token.strategy`;
+
 const JWT_OPTIONS = [
 	'algorithms',
 	'audience',
@@ -55,7 +57,7 @@ class JWTAccessStrategy extends Strategy {
 
 	authenticate(request, options) {
 		const {scheme, validated, verified} = inspect(request);
-		logger.debug(`${constant.EXPRESS_HOST}.token.strategy.access`,
+		logger.debug(`${namespace}.access`,
 			{jwt: json.string({options, scheme, validated, verified})});
 		if (!validated) {
 			request.res.status(constant.HTTP_STATUS_BAD_REQUEST).send(status.badRequest);
@@ -103,7 +105,7 @@ class JWTRefreshStrategy extends Strategy {
 
 	authenticate(request, options) {
 		const {scheme, validated, verified} = inspect(request);
-		logger.debug(`${constant.EXPRESS_HOST}.token.refresh`,
+		logger.debug(`${namespace}.refresh`,
 			{options, scheme, validated, verified});
 		if (validated && verified) {
 			const refresh = moment().add(constant.JWT_REFRESH_RANGE, constant.JWT_REFRESH_UNIT);

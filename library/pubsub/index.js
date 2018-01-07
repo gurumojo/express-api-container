@@ -7,6 +7,8 @@ const constant = require('../constant');
 const json = require('../json');
 const logger = require('../logger');
 
+const namespace = `${constant.API_NAME}.pubsub`;
+
 const host = constant.REDIS_HOST;
 const port = constant.REDIS_PORT;
 const registry = {};
@@ -15,21 +17,21 @@ const success = true;
 
 
 function configure(channel) {
-	logger.debug('pubsub.configure', {channel});
+	logger.debug(`${namespace}.configure`, {channel});
 	registry[channel].on('subscribe', (channel, count) => {
-		logger.debug('pubsub.subscribe', {channel, count, success});
+		logger.debug(`${namespace}.subscribe`, {channel, count, success});
 		service.publish(channel, json.string({subscribe: success}));
 	});
 	registry[channel].on('message', (channel, message) => {
-		logger.debug('pubsub.message', {channel, message});
+		logger.debug(`${namespace}.message`, {channel, message});
 	});
 }
 
 function initialize() {
-	logger.debug('pubsub.initialize', {active: false});
+	logger.debug(`${namespace}.initialize`, {active: false});
 	if (!service) {
 		service = create('service');
-		logger.info(`pubsub.redis`, {host, port});
+		logger.info(`${namespace}.redis`, {host, port});
 	}
 	each(registry, (object, channel, connection) => {
 		if (!connection[channel]) {
@@ -40,25 +42,25 @@ function initialize() {
 }
 
 function create(channel) {
-	logger.debug('pubsub.create', {channel});
+	logger.debug(`${namespace}.create`, {channel});
 	const connection = redis.createClient({host});
-	connection.on('connect', partial(logger.debug, `pubsub.${channel}`, {success}));
-	connection.on('error', partial(logger.error, `pubsub.${channel}`));
+	connection.on('connect', partial(logger.debug, `${namespace}.${channel}`, {success}));
+	connection.on('error', partial(logger.error, `${namespace}.${channel}`));
 	return connection;
 }
 
 
 function publish(channel, message) {
 	if (!registry[channel]) {
-		logger.warn('pubsub.publish', {invalid: channel});
+		logger.warn(`${namespace}.publish`, {invalid: channel});
 	} else {
-		logger.debug('pubsub.publish', {channel});
+		logger.debug(`${namespace}.publish`, {channel});
 		service.publish(channel, json.string(message));
 	}
 }
 
 function quit() {
-	logger.debug('pubsub.quit', {shutdown: true});
+	logger.debug(`${namespace}.quit`, {shutdown: true});
 	each(registry, (object, channel, connection) => {
 		object.unsubscribe();
 		object.quit();
@@ -69,7 +71,7 @@ function quit() {
 }
 
 function subscribe(channel, handler) {
-	logger.debug('pubsub.subscribe', {channel});
+	logger.debug(`${namespace}.subscribe`, {channel});
 	if (channel && !has(registry, channel)) {
 		registry[channel] = null;
 	}

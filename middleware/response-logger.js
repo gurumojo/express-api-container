@@ -4,6 +4,8 @@ const {pick} = require('lodash');
 const constant = require('../library/constant');
 const logger = require('../library/logger');
 
+const namespace = `${constant.API_NAME}.response`;
+
 
 function isStatusRoute(request) {
 	return (request.path === '/status' || request.baseUrl === '/status');
@@ -25,7 +27,7 @@ function responseLogger(request, response, next) {
 			if (isStatusRoute(request)) {
 				method = 'debug';
 			}
-			logger[method](`${constant.EXPRESS_HOST}.response`, Object.assign(
+			logger[method](namespace, Object.assign(
 				pick(response, constant.LOGGER_WHITELIST_EXPRESS_RESPONSE),
 				{body}
 			));
