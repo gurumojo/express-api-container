@@ -3,13 +3,10 @@ const {pick} = require('lodash');
 
 const constant = require('../library/constant');
 const logger = require('../library/logger');
+const {isStatusRoute} = require('../library/request');
 
 const namespace = `${constant.API_NAME}.response`;
 
-
-function isStatusRoute(request) {
-	return (request.path === '/status' || request.baseUrl === '/status');
-}
 
 function responseLogger(request, response, next) {
 	const send = response.send;
