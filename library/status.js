@@ -1,118 +1,117 @@
 'use strict';
+
 const constant = require('./constant');
 
-
-module.exports = Object.freeze({
+const status = Object.freeze({
 	accepted: {
-		success: {
-			code: constant.HTTP_STATUS_ACCEPTED,
-			description: 'The request was accepted for processing.',
-			message: 'ACCEPTED'
-		}
+		code: constant.HTTP_STATUS_ACCEPTED,
+		header: {'X-HTTP-Status-Location': undefined},
+		message: 'The request was accepted for processing.',
+		text: 'ACCEPTED'
 	},
 	badGateway: {
-		error: {
-			code: constant.HTTP_STATUS_BAD_GATEWAY,
-			description: 'The proxy for this request was not found.',
-			message: 'BAD_GATEWAY'
-		}
+		code: constant.HTTP_STATUS_BAD_GATEWAY,
+		header: {'X-HTTP-Gateway-Location': undefined},
+		message: 'The proxy for this request was not found.',
+		text: 'BAD_GATEWAY'
 	},
 	badRequest: {
-		error: {
-			code: constant.HTTP_STATUS_BAD_REQUEST,
-			description: 'The request was malformed. Consult API documentation for help.',
-			message: 'BAD_REQUEST'
-		}
+		code: constant.HTTP_STATUS_BAD_REQUEST,
+		message: 'The request was malformed. Consult API documentation.',
+		text: 'BAD_REQUEST'
 	},
 	conflict: {
-		error: {
-			code: constant.HTTP_STATUS_CONFLICT,
-			description: 'The request conflicts with current resource state.',
-			message: 'CONFLICT'
-		}
+		code: constant.HTTP_STATUS_CONFLICT,
+		message: 'The request conflicts with resource state rules.',
+		text: 'CONFLICT'
 	},
 	created: {
-		success: {
-			code: constant.HTTP_STATUS_CREATED,
-			description: 'The requested resource was created.',
-			message: 'CREATED'
-		}
+		code: constant.HTTP_STATUS_CREATED,
+		header: {
+			'Content-Type': undefined,
+			'ETag': undefined,
+			'Location': undefined
+		},
+		message: 'The requested resource was created.',
+		text: 'CREATED'
 	},
 	forbidden: {
-		error: {
-			code: constant.HTTP_STATUS_FORBIDDEN,
-			description: 'The requested resource requires more priviledge.',
-			message: 'FORBIDDEN'
-		}
+		code: constant.HTTP_STATUS_FORBIDDEN,
+		header: {'X-HTTP-Permission-Required': undefined},
+		message: 'The requested resource requires more priviledge.',
+		text: 'FORBIDDEN'
 	},
 	gatewayTimeout: {
-		error: {
-			code: constant.HTTP_STATUS_GATEWAY_TIMEOUT,
-			description: 'The proxy for this request failed to respond.',
-			message: 'GATEWAY_TIMEOUT'
-		}
+		code: constant.HTTP_STATUS_GATEWAY_TIMEOUT,
+		header: {'X-HTTP-Gateway-Location': undefined},
+		message: 'The proxy for this request failed to respond.',
+		text: 'GATEWAY_TIMEOUT'
+	},
+	gone: {
+		code: constant.HTTP_STATUS_GONE,
+		message: 'The requested resource was removed.',
+		text: 'GONE'
 	},
 	internalServerError: {
-		error: {
-			code: constant.HTTP_STATUS_INTERNAL_SERVER_ERROR,
-			description: 'The service encountered an unexpected exception.',
-			message: 'INTERNAL_SERVER_ERROR'
-		}
+		code: constant.HTTP_STATUS_INTERNAL_SERVER_ERROR,
+		message: 'The service encountered an unexpected exception.',
+		text: 'INTERNAL_SERVER_ERROR'
 	},
 	methodNotAllowed: {
-		error: {
-			code: constant.HTTP_STATUS_METHOD_NOT_ALLOWED,
-			description: 'The requested method is not allowed for this route.',
-			message: 'METHOD_NOT_ALLOWED'
-		}
+		code: constant.HTTP_STATUS_METHOD_NOT_ALLOWED,
+		header: {'Allow': undefined},
+		message: 'The requested method is not allowed for this route.',
+		text: 'METHOD_NOT_ALLOWED'
+	},
+	nonauthoritativeInformation: {
+		code: constant.HTTP_STATUS_NONAUTHORITATIVE_INFORMATION,
+		header: {'X-HTTP-Information-Source': undefined},
+		message: 'The request was fulfilled with non-authoritative information.',
+		text: 'NONAUTHORITATIVE_INFORMATION'
 	},
 	notAcceptable: {
-		error: {
-			code: constant.HTTP_STATUS_NOT_ACCEPTABLE,
-			description: 'The requested response type is not available.',
-			message: 'NOT_ACCEPTABLE'
-		}
+		code: constant.HTTP_STATUS_NOT_ACCEPTABLE,
+		header: {'Content-Type': undefined},
+		message: 'The requested response type is not available.',
+		text: 'NOT_ACCEPTABLE'
 	},
 	notFound: {
-		error: {
-			code: constant.HTTP_STATUS_NOT_FOUND,
-			description: 'The requested resource does not exist.',
-			message: 'NOT_FOUND'
-		}
+		code: constant.HTTP_STATUS_NOT_FOUND,
+		message: 'The requested resource does not seem to exist.',
+		text: 'NOT_FOUND'
 	},
 	noContent: {
-		success: {
-			code: constant.HTTP_STATUS_NO_CONTENT,
-			description: 'The requested resource has no response object.',
-			message: 'NO_CONTENT'
-		}
+	 	code: constant.HTTP_STATUS_NO_CONTENT,
+	 	message: 'The request succeeded without returning anything.',
+	 	text: 'NO_CONTENT'
 	},
 	ok: {
-		success: {
-			code: constant.HTTP_STATUS_OK,
-			description: 'The requested resource was found.',
-			message: 'OK'
-		}
+		code: constant.HTTP_STATUS_OK,
+		message: 'The request succeeded.',
+		text: 'OK'
 	},
 	requestTimeout: {
-		error: {
-			code: constant.HTTP_STATUS_REQUEST_TIMEOUT,
-			description: 'The requested resource timed out before returning a response.',
-			message: 'REQUEST_TIMEOUT'
-		}
+		code: constant.HTTP_STATUS_REQUEST_TIMEOUT,
+		message: 'The requested resource timed out before returning a response.',
+		text: 'REQUEST_TIMEOUT'
+	},
+	resetContent: {
+		code: constant.HTTP_STATUS_RESET_CONTENT,
+		message: 'The request succeeded. Reset form inputs.',
+		text: 'RESET_CONTENT'
 	},
 	serviceUnavailable: {
-		error: {
-			code: constant.HTTP_STATUS_SERVICE_UNAVAILABLE,
-			description: 'The requested service is currently unavailable. Try again later.',
-			message: 'SERVICE_UNAVAILABLE'
-		}
+		code: constant.HTTP_STATUS_SERVICE_UNAVAILABLE,
+		header: {'Retry-After': undefined},
+		message: 'The requested service is currently unavailable. Try again later.',
+		text: 'SERVICE_UNAVAILABLE'
 	},
 	unauthorized: {
-		error: {
-			code: constant.HTTP_STATUS_UNAUTHORIZED,
-			description: 'The requested resource is not allowed without authentication.',
-			message: 'UNAUTHORIZED'
-		}
+		code: constant.HTTP_STATUS_UNAUTHORIZED,
+		header: {'WWW-Authenticate': undefined},
+		message: 'The requested resource is not allowed without authentication.',
+		text: 'UNAUTHORIZED'
 	}
 });
+
+module.exports = status;
