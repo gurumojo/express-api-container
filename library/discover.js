@@ -23,13 +23,19 @@ function inspect(path, accumulator, value) {
 	return accumulator;
 }
 
+function isGuarded(name) {
+	logger.debug(`${namespace}.isGuarded`, {name, secure: !!constant[name]});
+	return constant[name];
+}
+
 function register(path, accumulator, value) {
 	const name = value.split('.').slice(0, -1).join('.');
 	logger.debug(`${namespace}.register`, {name});
 	accumulator.push({
 		module: `${path}/${name}`,
 		name,
-		path: `${path}/${value}`
+		path: `${path}/${value}`,
+		secure: isGuarded(name)
 	});
 }
 

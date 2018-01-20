@@ -1,0 +1,10 @@
+{
+	"item": {
+		"GET": ["item.read"],
+		"PUT": ["item.create", "item.update", "item.delete"]
+	},
+	"user": {
+		"GET": ["user.read"],
+		"PUT": ["user.create", "user.update", "user.delete"]
+	}
+}

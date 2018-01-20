@@ -17,6 +17,10 @@ const {passport} = require('./library/token');
 const namespace = `${constant.API_NAME}`;
 
 
+function catchall(request, response) {
+	response.status(constant.HTTP_STATUS_METHOD_NOT_ALLOWED).send(status.methodNotAllowed);
+}
+
 function delegate(channel, message) {
 	const object = json.object(message);
 	if (get(object, 'error')) {
@@ -25,10 +29,6 @@ function delegate(channel, message) {
 	if (!get(object, 'subscribe')) {
 		logger.info(`${namespace}.delegate`, object);
 	}
-}
-
-function derelict(request, response) {
-	response.status(constant.HTTP_STATUS_METHOD_NOT_ALLOWED).send(status.methodNotAllowed);
 }
 
 function guard(route) {
@@ -48,7 +48,7 @@ discover(`${__dirname}/middleware`)
 discover(`${__dirname}/route`)
 .forEach(route => service.use(`/${route.name}`, guard(route), require(route.module)));
 
-service.use('/', guard({secure: true}), derelict);
+service.use('/', guard({secure: true}), catchall);
 
 service.listen(constant.EXPRESS_PORT, () => {
 	logger.info(`${namespace}.listen`, {
