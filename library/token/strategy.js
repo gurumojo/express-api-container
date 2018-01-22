@@ -26,10 +26,14 @@ const JWT_OPTIONS = [
 	'secretOrKey'
 ];
 
-const JWT_PAYLOAD = [
-	'jai',
-	'jri',
-	'sub'
+const JWT_ACCESS_PAYLOAD = [
+	'sub',
+	'user'
+];
+
+const JWT_REFRESH_PAYLOAD = [
+	'sub',
+	'auth'
 ];
 
 const STRATEGY_OPTIONS = [
@@ -38,7 +42,7 @@ const STRATEGY_OPTIONS = [
 
 function inspect(request) {
 	const [scheme, token] = (request.get('authorization') || '').split(' ');
-	const validated = validate(decode(token), {complete: true});
+	const validated = validate(decode(token));
 	const verified = verify(token);
 	return {scheme, validated, verified};
 }
@@ -66,9 +70,9 @@ class JWTAccessStrategy extends Strategy {
 				request.res.status(constant.HTTP_STATUS_UNAUTHORIZED).send(status.unauthorized);
 			} else {
 				if (this.passReqToCallback) {
-					this.verify(request, pick(verified, JWT_PAYLOAD), this.done.bind(this));
+					this.verify(request, pick(verified, JWT_ACCESS_PAYLOAD), this.done.bind(this));
 				} else {
-					this.verify(pick(verified, JWT_PAYLOAD), this.done.bind(this));
+					this.verify(pick(verified, JWT_ACCESS_PAYLOAD), this.done.bind(this));
 				}
 			}
 		}
@@ -76,12 +80,16 @@ class JWTAccessStrategy extends Strategy {
 
 	done(error, payload, request) {
 		if (error) {
-			request ? request.res.status(constant.HTTP_STATUS_BAD_REQUEST).send(status.badRequest)
-				: this.fail(constant.HTTP_STATUS_BAD_REQUEST);
+			request
+				? request.res.status(status.badRequest.code)
+					.send(status.badRequest)
+				: this.fail(status.badRequest.code);
 		} else {
 			if (!payload) {
-				request ? request.res.status(constant.HTTP_STATUS_UNAUTHORIZED).send(status.unauthorized)
-					: this.fail(constant.HTTP_STATUS_UNAUTHORIZED);
+				request
+					? request.res.status(status.unauthorized.code)
+						.send(status.unauthorized)
+					: this.fail(status.unauthorized.code);
 			} else {
 				this.success(payload);
 			}
@@ -94,33 +102,54 @@ util.inherits(JWTAccessStrategy, Strategy);
 
 class JWTRefreshStrategy extends Strategy {
 
-	constructor(options, done) {
+	constructor(options, verify) {
 		super();
 		Object.assign(this,
 			pick(options, JWT_OPTIONS),
 			pick(options, STRATEGY_OPTIONS),
-			{done, name: 'jwt-refresh'}
+			{name: 'jwt-refresh', verify}
 		);
 	}
 
 	authenticate(request, options) {
 		const {scheme, validated, verified} = inspect(request);
 		logger.debug(`${namespace}.refresh`,
-			{options, scheme, validated, verified});
-		if (validated && verified) {
-			const refresh = moment().add(constant.JWT_REFRESH_RANGE, constant.JWT_REFRESH_UNIT);
-			if (moment(verified.payload.exp * 1000).isBefore(refresh)) {
-				request.res.locals.token = {
-					access: sign(),
-					refresh: sign(verified.payload.sub)
-				};
-				request.set('x-refresh-token', signed);
-			}
+			{jwt: json.string({options, scheme, validated, verified})});
+		if (!validated) {
+			request.res.status(status.badRequest.code).send(status.badRequest);
 		} else {
-			this.fail(constant.HTTP_STATUS_UNAUTHORIZED);
+			if (!verified) {
+				request.res.status(status.unauthorized.code).send(status.unauthorized);
+			} else {
+				if (this.passReqToCallback) {
+					this.verify(request, pick(verified, JWT_REFRESH_PAYLOAD), this.done.bind(this));
+				} else {
+					this.verify(pick(verified, JWT_REFRESH_PAYLOAD), this.done.bind(this));
+				}
+			}
+		}
+	}
+
+	done(error, payload, request) {
+		if (error) {
+			request
+				? request.res.status(status.badRequest.code)
+					.send(status.badRequest)
+				: this.fail(status.badRequest.code);
+		} else {
+			if (!payload) {
+				request
+					? request.res.status(status.unauthorized.code)
+						.send(status.unauthorized)
+					: this.fail(status.unauthorized.code);
+			} else {
+				this.success(payload);
+			}
 		}
 	}
 }
+
+util.inherits(JWTRefreshStrategy, Strategy);
 
 module.exports = {
 	BearerStrategy,

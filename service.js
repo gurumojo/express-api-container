@@ -33,7 +33,7 @@ function delegate(channel, message) {
 
 function guard(route) {
 	return route.secure
-	  ? passport.authenticate('jwt-access', {session: false})
+	  ? passport.authenticate('jwt-access')
 	  : (request, response, next) => next();
 }
 

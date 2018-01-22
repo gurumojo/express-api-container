@@ -2,12 +2,12 @@
 const readdir = require('fs').readdirSync;
 const {partial} = require('lodash');
 
+const constant = require('./constant');
 const logger = require('./logger');
-const {API_NAME} = require('./constant');
 
 const blacklist = /index.js|node_modules|package.json|yarn.lock/;
 
-const namespace = `${API_NAME}.discover`;
+const namespace = `${constant.API_NAME}.discover`;
 
 
 function discover(path) {

@@ -8,8 +8,7 @@ const json = require('../json');
 const logger = require('../logger');
 const {API_NAME} = require('../constant');
 
-const namespace = `${API_NAME}.token.passport`;
-
+const sign = require('./sign');
 const {
 	JWTAccessStrategy,
 	JWTRefreshStrategy,
@@ -22,12 +21,15 @@ const ITERATIONS = 20000;
 const SALT_BYTES = 16;
 
 const strategyConfig = {
-	passReqToCallback: true
+	passReqToCallback: true,
+	session: false
 };
+
+const namespace = `${API_NAME}.token.passport`;
 
 
 function errorHandler(request, done, error) {
-	logger.error(namespace, {error});
+	logger.error(namespace, {error: error.stack});
 	done(error, false, request);
 }
 
@@ -41,32 +43,50 @@ function successHandler(request, done, success) {
 	done(null, success, request);
 }
 
+function isUUID(value) {
+	return /^(?:[0-9a-f]{8}-?[0-9a-f]{4}-?[1-5][0-9a-f]{3}-?[89ab][0-9a-f]{3}-?[0-9a-f]{12}|00000000-0000-0000-0000-000000000000)$/i.test(value);
+}
+
 
 function jwtAccessVerify(request, payload, done) {
-	logger.debug(`${namespace}.jwt.access`, {verify: 'access'});
-	const client = get(payload, 'sub');
-	const user = get(payload, 'jai');
-	if (isPlainObject(client) && isPlainObject(user)) {
+	const sub = get(payload, 'sub');
+	const user = get(payload, 'user');
+	logger.debug(`${namespace}.jwt.access`, {verify: sub});
+	if (isUUID(sub) && isPlainObject(user)) {
 		successHandler(request, done, user);
 	} else {
 		failureHandler(request, done, {
-			message: 'malformed token',
-			payload: json.string({client, user}),
-			required: '{jai, sub}'
+			message: 'malformed access token payload',
+			payload: json.string({sub, user}),
+			required: '{sub: <String>, user: <Object>}'
 		});
 	}
 }
 
+const refreshReadSQL = 'SELECT * FROM user WHERE id = $1 AND uuid = $2';
+
 function jwtRefreshVerify(request, payload, done) {
-	logger.info(`${namespace}.jwt.refresh`, {verify: 'refresh'});
-	const client = get(payload, 'sub');
-	const user = get(payload, 'jri');
-	if (isPlainObject(client) && isPlainObject(user)) {
-		data.one('SELECT * FROM user WHERE id = $1', [user.id])
+	const sub = get(payload, 'sub');
+	const auth = get(payload, 'auth');
+	logger.info(`${namespace}.jwt.refresh`, {verify: sub});
+	if (isUUID(sub) && isPlainObject(auth)) {
+		//data.one(refreshReadSQL, [auth.user.id, sub])
+		Promise.resolve(auth)
+		.then(xxx => {
+			request.res.locals.token = {
+				access: sign({sub, user: auth.user}),
+				refresh: sign({sub, auth})
+			}
+			return xxx;
+		})
 		.then(partial(successHandler, request, done))
 		.catch(partial(errorHandler, request, done));
 	} else {
-		failureHandler(request, done, {message: 'malformed token payload', payload});
+		failureHandler(request, done, {
+			message: 'malformed refresh token payload',
+			payload: json.string({sub, auth}),
+			required: '{sub: <String>, auth: <Object>}'
+		});
 	}
 }
 
@@ -98,6 +118,10 @@ function localVerify(request, username, password, done) {
 	.catch(partial(errorHandler, request, done));
 }
 
+
+passport.serializeUser((user, done) => {
+  done(null, user);
+});
 
 passport.use(new JWTAccessStrategy(strategyConfig, jwtAccessVerify));
 passport.use(new JWTRefreshStrategy(strategyConfig, jwtRefreshVerify));

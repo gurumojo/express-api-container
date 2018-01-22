@@ -12,13 +12,14 @@ const options = {
 
 const query = 'SELECT * FROM token WHERE refresh = $1';
 
+const namespace = `${API_NAME}.token.auth`;
+
 
 function auth(token) {
-    const namespace = `${API_NAME}.token.auth`;
 	logger.debug(namespace, jwt.decode(token, options));
 	data.one(query, token ? [token] : token)
 	.tap(o => logger.debug(namespace, {user: json.string(o)}))
-	.catch(e => logger.warn(namespace, {error: e.stack}));
+	.catch(e => logger.warn(namespace, {failure: e.stack}));
 }
 
 

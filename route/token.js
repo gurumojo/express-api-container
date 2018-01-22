@@ -1,15 +1,18 @@
 'use strict';
-const passport = require('../library/token/passport');
 const token = require('../library/router')();
+const {passport} = require('../library/token');
 
 
 token.get('/',
-	passport.authenticate('jwt-refresh', {session: false}),
-	(request, response) => response.send({token: response.locals.token})
+	passport.authenticate('jwt-refresh'),
+	(request, response) => response.set({
+		'x-access-token': response.locals.token.access,
+		'x-refresh-token': response.locals.token.refresh
+	}).status(204).send()
 );
 
-token.post('/',
-	passport.authenticate('local', {session: false}),
+token.put('/',
+	passport.authenticate('local'),
 	(request, response) => response.send({token: response.locals.token})
 );
 
