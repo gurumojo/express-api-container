@@ -1,7 +1,10 @@
 {
-	"POSTGRES_DB": "postgres",
+	"POSTGRES_OPS_DB": "postgres",
+	"POSTGRES_OPS_PASSWORD": "",
+	"POSTGRES_OPS_USER": "postgres",
 	"POSTGRES_HOST": "0.0.0.0",
-	"POSTGRES_PASSWORD": "",
 	"POSTGRES_PORT": 5432,
-	"POSTGRES_USER": "postgres"
+	"POSTGRES_DB": "api",
+	"POSTGRES_PASSWORD": "",
+	"POSTGRES_USER": "api"
 }

@@ -1,38 +1,34 @@
 'use strict';
 const Promise = require('bluebird');
 const postgres = require('pg-promise');
-const process = require('process');
+const {cloneDeep, get} = require('lodash');
 
 const constant = require('../constant');
 const json = require('../json');
 const logger = require('../logger');
+const sql = require('./sql');
 
 const namespace = `${constant.API_NAME}.data`;
 
 const host = constant.POSTGRES_HOST;
 const port = constant.POSTGRES_PORT;
-const database = constant.POSTGRES_DB;
 const user = constant.POSTGRES_USER;
 const password = constant.POSTGRES_PASSWORD;
+const database = constant.POSTGRES_DB;
+const pgUser = constant.POSTGRES_OPS_USER;
+const pgPassword = constant.POSTGRES_OPS_PASSWORD;
+const pgDatabase = constant.POSTGRES_OPS_DB;
 
-const options = {
+const initOptions = {
 	capSQL: true,
 	//connect: _notify,
 	promiseLib: Promise,
 	//receive: _camelize
 };
 
-const sql = {
-	createDatabase: (database) => `CREATE DATABASE ${database}`,
-	search: (table, column, value) => `SELECT * FROM ${table}
-		WHERE ${column} LIKE '%${value}%'`,
-	showDatabases: () => 'SELECT datname FROM pg_database',
-	showTables: () => `SELECT * FROM pg_catalog.pg_tables
-		WHERE schemaname NOT IN ('pg_catalog', 'information_schema')`
-};
-//return new postgres.ParameterizedQuery(`SELECT * FROM ${table} WHERE ${column} LIKE $1`)
-
+let cache = {};
 let db = null;
+let pg = null;
 let pool = null;
 
 
@@ -50,8 +46,120 @@ function _camelize(data) {
 	}
 }
 
-function _fail() {
-	return Promise.reject(new Error('no database connection'));
+function _databases() {
+	const cached = cache.databases;
+	if (cached) {
+		return Promise.resolve(cached);
+	} else {
+		return !pg
+			? _fail(pgDatabase)
+			: pg.map(sql.query.showDatabases, null, i => i.datname)
+				.tap(o => {
+					logger.debug(`${namespace}.databases`, {current: o});
+					cache.databases = o;
+				})
+				.catch(e => logger.error(`${namespace}.databases`, {failure: e.stack}));
+	}
+}
+
+function _dbBootstrap() {
+	_pgHandshake();
+	return Promise.all([_databases(), _roles()]).then(([dbs, roles]) => {
+		if (!dbs.find(i => i === database)) {
+			logger.debug(`${namespace}.bootstrap`, {database: 'missing'});
+			if (!roles.find(i => i === database)) {
+				logger.debug(`${namespace}.bootstrap`, {role: 'missing'});
+				return _dbSetup().then(_dbImport);
+			}
+			return _dbImport();
+		}
+		logger.debug(`${namespace}.bootstrap`, {status: 'OK'});
+	})
+	.catch(e => {
+		logger.error(`${namespace}.bootstrap`, {failure: e.stack});
+		throw e;
+	})
+	.finally(_pgDisconnect);
+}
+
+function _dbCreate() {
+	logger.debug(`${namespace}.create`, {database});
+	return pg.none(sql.query.dropDatabase, {database})
+		.then(() => pg.none(sql.query.createDatabase, {database}));
+}
+
+function _dbDisconnect() {
+	db.$pool.end();
+	db = null;
+	cache = {};
+	logger.debug(`${namespace}.pool`, {database, disconnect: Date.now()});
+}
+
+function _dbGrants() {
+	const role = database;
+	logger.debug(`${namespace}.grant`, {database, role});
+	return pg.none(sql.query.changeOwner, {database, role})
+		//.then(() => pg.none(sql.query.revokeGrants, {role}))
+		.then(() => Promise.all([
+			pg.none(sql.query.grantConnect, {database, role}),
+			//pg.none(sql.query.grantDatabase, {database, role}),
+			pg.none(sql.query.grantFutureSequences, {role}),
+			pg.none(sql.query.grantFutureTables, {role})
+		]));
+}
+
+function _dbHandshake() {
+	logger.debug(`${namespace}.pool`, {database, handshake: Date.now()});
+	db = pool({host, port, user, password, database});
+}
+
+function _dbImport() {
+	return !pg
+		? _fail(pgDatabase)
+		: pg.none(sql.base)
+			.then(() => logger.info(`${namespace}.import`, {success: 'base.sql'}))
+			.then(_dbPatch)
+			.catch(error => {
+				logger.error(`${namespace}.import`, {failure: error.stack});
+				throw error;
+			});
+}
+
+function _dbPatch() {
+	return sql.patch.map(patch => {
+		return pg.none(patch).then(() => {
+			logger.info(`${namespace}.patch`, {success: patch.file.split('/').pop()});
+		});
+	});
+}
+
+function _dbRevokes() {
+	logger.debug(`${namespace}.revoke`, {database, role: 'public'});
+	return Promise.all([
+		pg.none(sql.query.revokePublicConnect, {database}),
+		pg.none(sql.query.revokePublicSequences),
+		pg.none(sql.query.revokePublicTables)
+	]);
+}
+
+function _dbRole() {
+	logger.debug(`${namespace}.role`, {database});
+	return pg.none(sql.query.createRole, {role: database, permission: 'NOINHERIT'});
+}
+
+function _dbSetup() {
+	logger.debug(`${namespace}.setup`, {database});
+	return !pg
+		? _fail(pgDatabase)
+		: _dbCreate()
+			.then(_dbRevokes)
+			.then(_dbRole)
+			.then(_dbGrants)
+			.catch(e => logger.error(`${namespace}.setup`, {failure: e.stack}));
+}
+
+function _fail(name) {
+	return Promise.reject(new Error(`${name}: database connection failure`));
 }
 
 function _notify(client, context, fresh) {
@@ -61,78 +169,118 @@ function _notify(client, context, fresh) {
 	}
 }
 
+function _pgDisconnect() {
+	pg.$pool.end();
+	pg = null;
+	logger.debug(`${namespace}.pool`, {database: pgDatabase, disconnect: Date.now()});
+}
+
+function _pgHandshake() {
+	logger.debug(`${namespace}.pool`, {database: pgDatabase, handshake: Date.now()});
+	pg = pool({host, port, user: pgUser, password: pgPassword, database: pgDatabase});
+}
+
+function _roles() {
+	const cached = cache.roles;
+	if (cached) {
+		return Promise.resolve(cached);
+	} else {
+		return !pg
+			? _fail(pgDatabase)
+			: pg.map(sql.query.getRoles, null, i => i.rolname)
+				.tap(o => {
+					logger.debug(`${namespace}.roles`, {current: o});
+					cache.roles = o;
+				})
+				.catch(e => logger.error(`${namespace}.roles`, {failure: e.stack}));
+	}
+}
+
+function _tables() {
+	const cached = get(cache, 'tables');
+	if (cached) {
+		return Promise.resolve(cached);
+	} else {
+		return !pg
+			? _fail(pgDatabase)
+			: pg.any(sql.query.showTables)
+				.tap(o => {
+					logger.debug(`${namespace}.tables`, {current: o});
+					cache.tables = o;
+				})
+				.catch(e => logger.error(`${namespace}.tables`, {failure: e.stack}));
+	}
+}
+
 
 function any(query, input) {
 	logger.debug(`${namespace}.any`, {query, input: json.string(input)});
-	return !db ? _fail() : db.any(query, input)
+	return !db ? _fail(database) : db.any(query, input)
 	.tap(o => logger.debug(`${namespace}.any`, {result: json.string(o)}))
 	.catch(e => logger.error(`${namespace}.any`, {error: e.stack}));
 }
 
 function connect() {
-	logger.info(`${namespace}.postgres`, {host, port});
-	pool = postgres(options);
-	db = pool({host, port, user, password, database});
+	logger.debug(`${namespace}.connect`, {database});
+	pool = postgres(initOptions);
+	return _dbBootstrap().then(_dbHandshake).then(() => {
+		logger.info(`${namespace}.connect`, {database});
+	});
 }
 
-function create(database) {
-	logger.info(`${namespace}.create`, {database});
-	return !db ? _fail() : db.none(sql.createDatabase(database))
-	.tap(x => logger.debug(`${namespace}.create`, {success: !x}))
-	.catch(e => logger.error(`${namespace}.create`, {error: e.stack}));
+function describe() {
+	if (cache.databases && cache.tables) {
+		return Promise.resolve(cloneDeep(cache));
+	} else {
+		return Promise.props({databases: _databases(), tables: _tables()})
+		.tap(o => logger.debug(`${namespace}.describe`, {result: json.string(o)}))
+		.catch(e => logger.error(`${namespace}.describe`, {error: e.stack}));
+	}
 }
 
-function list() {
-	logger.debug(`${namespace}.namespace`, {query: sql.showDatabases()});
-	return !db ? _fail() : db.map(sql.showDatabases(), null, i => i.datname)
-	.tap(o => logger.debug(`${namespace}.namespace`, {databases: json.string(o)}))
-	.catch(e => logger.error(`${namespace}.namespace`, {error: e.stack}));
+function disconnect() {
+	_dbDisconnect();
+	logger.info(`${namespace}.disconnect`, {database});
 }
 
 function many(query, input) {
 	logger.debug(`${namespace}.many`, {query, input: json.string(input)});
-	return !db ? _fail() : db.many(query, input)
+	return !db ? _fail(database) : db.many(query, input)
 	.tap(o => logger.debug(`${namespace}.many`, {result: json.string(o)}))
 	.catch(e => logger.error(`${namespace}.many`, {error: e.stack}));
 }
 
 function map(query, input, transform) {
 	logger.debug(`${namespace}.map`, {query, input: json.string(input)});
-	return !db ? _fail() : db.map(query, input, transform)
+	return !db ? _fail(database) : db.map(query, input, transform)
 	.tap(o => logger.debug(`${namespace}.map`, {result: json.string(o)}))
 	.catch(e => logger.error(`${namespace}.map`, {error: e.stack}));
 }
 
 function none(query, input) {
 	logger.debug(`${namespace}.none`, {query, input: json.string(input)});
-	return !db ? _fail() : db.none(query, input)
+	return !db ? _fail(database) : db.none(query, input)
 	.tap(x => logger.debug(`${namespace}.none`, {result: json.string(x)}))
 	.catch(e => logger.error(`${namespace}.none`, {error: e.stack}));
 }
 
 function one(query, input) {
 	logger.debug(`${namespace}.one`, {query, input: json.string(input)});
-	return !db ? _fail() : db.one(query, input)
+	return !db ? _fail(database) : db.one(query, input)
 	.tap(o => logger.debug(`${namespace}.one`, {result: json.string(o)}))
 	.catch(e => logger.error(`${namespace}.one`, {error: e.stack}));
 }
 
-function quit() {
-	pool.end();
-	db = null;
-	logger.debug(`${namespace}.postgres`, {stopped: Date.now()});
-}
-
 function search(table, column, value) {
 	logger.info(`${namespace}.search`, {table, column, value});
-	return !db ? _fail() : db.any(sql.search(table, column), [value])
+	return !db ? _fail(database) : db.any(sql.query.search, {table, column, value})
 	.tap(o => logger.debug(`${namespace}.search`, {input: value, output: json.string(o)}))
 	.catch(e => logger.error(`${namespace}.search`, {error: e.stack}));
 }
 
 function status() {
-	logger.debug(`${namespace}.status`, {connected: !!db});
-	return !db ? _fail() : db.any(sql.showTables())
+	logger.debug(`${namespace}.status`, {connected: !!db, database});
+	return !db ? _fail(database) : db.any(sql.query.showTables)
 	.tap(o => logger.debug(`${namespace}.status`, {tables: json.string(o)}))
 	.catch(e => logger.error(`${namespace}.status`, {error: e.stack}));
 }
@@ -144,13 +292,12 @@ connect();
 module.exports = {
 	any,
 	connect,
-	create,
-	list,
+	describe,
+	disconnect,
 	many,
 	map,
 	none,
 	one,
-	quit,
 	search,
 	status
 };
