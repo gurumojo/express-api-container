@@ -9,9 +9,12 @@ const blacklist = /index.js|node_modules|package.json|yarn.lock/;
 
 const namespace = `${constant.API_NAME}.discover`;
 
+let isRoute = false;
+
 
 function discover(path) {
 	logger.debug(namespace, {path});
+	isRoute = path.split('/').pop() === 'route';
 	return readdir(path).reduce(partial(inspect, path),  []);
 }
 
@@ -24,7 +27,8 @@ function inspect(path, accumulator, value) {
 }
 
 function isGuarded(name) {
-	logger.debug(`${namespace}.isGuarded`, {name, secure: !!constant[name]});
+	const guarded = Boolean(constant[name]);
+	logger[isRoute ? 'info' : 'debug'](`${namespace}.route.${name}`, {guarded});
 	return constant[name];
 }
 
@@ -35,7 +39,7 @@ function register(path, accumulator, value) {
 		module: `${path}/${name}`,
 		name,
 		path: `${path}/${value}`,
-		secure: isGuarded(name)
+		secure: isRoute ? isGuarded(name) : isRoute
 	});
 }
 

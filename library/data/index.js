@@ -83,7 +83,7 @@ function _dbBootstrap() {
 }
 
 function _dbCreate() {
-	logger.debug(`${namespace}.create`, {database});
+	logger.debug(`${namespace}.database`, {create: database});
 	return pg.none(sql.query.dropDatabase, {database})
 		.then(() => pg.none(sql.query.createDatabase, {database}));
 }
@@ -92,7 +92,7 @@ function _dbDisconnect() {
 	db.$pool.end();
 	db = null;
 	cache = {};
-	logger.debug(`${namespace}.pool`, {database, disconnect: Date.now()});
+	logger.debug(`${namespace}.pool`, {disconnect: database});
 }
 
 function _dbGrants() {
@@ -109,7 +109,7 @@ function _dbGrants() {
 }
 
 function _dbHandshake() {
-	logger.debug(`${namespace}.pool`, {database, handshake: Date.now()});
+	logger.debug(`${namespace}.pool`, {handshake: database});
 	db = pool({host, port, user, password, database});
 }
 
@@ -143,12 +143,11 @@ function _dbRevokes() {
 }
 
 function _dbRole() {
-	logger.debug(`${namespace}.role`, {database});
+	logger.debug(`${namespace}.role`, {create: database});
 	return pg.none(sql.query.createRole, {role: database, permission: 'NOINHERIT'});
 }
 
 function _dbSetup() {
-	logger.debug(`${namespace}.setup`, {database});
 	return !pg
 		? _fail(pgDatabase)
 		: _dbCreate()
@@ -172,11 +171,11 @@ function _notify(client, context, fresh) {
 function _pgDisconnect() {
 	pg.$pool.end();
 	pg = null;
-	logger.debug(`${namespace}.pool`, {database: pgDatabase, disconnect: Date.now()});
+	logger.debug(`${namespace}.pool`, {disconnect: pgDatabase});
 }
 
 function _pgHandshake() {
-	logger.debug(`${namespace}.pool`, {database: pgDatabase, handshake: Date.now()});
+	logger.debug(`${namespace}.pool`, {handshake: pgDatabase});
 	pg = pool({host, port, user: pgUser, password: pgPassword, database: pgDatabase});
 }
 
@@ -224,7 +223,7 @@ function connect() {
 	logger.debug(`${namespace}.connect`, {database});
 	pool = postgres(initOptions);
 	return _dbBootstrap().then(_dbHandshake).then(() => {
-		logger.info(`${namespace}.connect`, {database});
+		logger.info(`${namespace}.postgres`, {host, port});
 	});
 }
 

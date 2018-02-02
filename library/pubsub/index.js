@@ -23,7 +23,7 @@ function configure(channel) {
 		service.publish(channel, json.string({subscribe: success}));
 	});
 	registry[channel].on('message', (channel, message) => {
-		logger.debug(`${namespace}.message`, {channel, message});
+		logger.info(`${namespace}.message`, {channel, message});
 	});
 }
 
