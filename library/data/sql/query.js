@@ -8,7 +8,7 @@ const SQL = Object.freeze({
 	createDatabase: `CREATE DATABASE $[database^] ENCODING 'UTF8'`,
 		// OWNER $[role] TABLESPACE $[path] CONNECTION LIMIT $[limit]
 
-	createRole: `CREATE ROLE $[role^] $[permission^]`,
+	createRole: `CREATE ROLE $[role^] $[partition^]`,
 
 	createUser: `CREATE USER $[user^] WITH PASSWORD $[secret]`,
 

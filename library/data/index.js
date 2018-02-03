@@ -15,6 +15,7 @@ const port = constant.POSTGRES_PORT;
 const user = constant.POSTGRES_USER;
 const password = constant.POSTGRES_PASSWORD;
 const database = constant.POSTGRES_DB;
+const role = `${database}_group`;
 const pgUser = constant.POSTGRES_OPS_USER;
 const pgPassword = constant.POSTGRES_OPS_PASSWORD;
 const pgDatabase = constant.POSTGRES_OPS_DB;
@@ -96,12 +97,12 @@ function _dbDisconnect() {
 }
 
 function _dbGrants() {
-	const role = database;
 	logger.debug(`${namespace}.grant`, {database, role});
 	return pg.none(sql.query.changeOwner, {database, role})
 		//.then(() => pg.none(sql.query.revokeGrants, {role}))
 		.then(() => Promise.all([
 			pg.none(sql.query.grantConnect, {database, role}),
+			pg.none(sql.query.grantRole, {role, user}),
 			//pg.none(sql.query.grantDatabase, {database, role}),
 			pg.none(sql.query.grantFutureSequences, {role}),
 			pg.none(sql.query.grantFutureTables, {role})
@@ -143,8 +144,8 @@ function _dbRevokes() {
 }
 
 function _dbRole() {
-	logger.debug(`${namespace}.role`, {create: database});
-	return pg.none(sql.query.createRole, {role: database, permission: 'NOINHERIT'});
+	logger.debug(`${namespace}.role`, {create: role});
+	return pg.none(sql.query.createRole, {role, partition: 'NOINHERIT'});
 }
 
 function _dbSetup() {
@@ -153,8 +154,14 @@ function _dbSetup() {
 		: _dbCreate()
 			.then(_dbRevokes)
 			.then(_dbRole)
+			.then(_dbUser)
 			.then(_dbGrants)
 			.catch(e => logger.error(`${namespace}.setup`, {failure: e.stack}));
+}
+
+function _dbUser() {
+	logger.debug(`${namespace}.user`, {create: user});
+	return pg.none(sql.query.createUser, {user, secret: password});
 }
 
 function _fail(name) {
