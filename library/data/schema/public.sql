@@ -80,18 +80,46 @@ CREATE TABLE aspect (
 
 DROP TABLE IF EXISTS entity;
 CREATE TABLE entity (
-	id          SERIAL PRIMARY KEY,
-	uuid        UUID   NOT NULL UNIQUE,
-	email       TEXT   NOT NULL UNIQUE,
-	cipher      TEXT   NOT NULL,
-	name        TEXT   DEFAULT NULL,
-	description TEXT   DEFAULT NULL,
+	id          SERIAL    PRIMARY KEY,
+	uuid        UUID      NOT NULL UNIQUE,
+	cipher      TEXT      NOT NULL,
+	salt        TEXT      NOT NULL,
 	created     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	updated     TIMESTAMP DEFAULT NULL
-); -- AKA user
+); -- AKA user credentials
 
 DROP TRIGGER IF EXISTS updated_entity_trigger ON entity;
 CREATE TRIGGER updated_entity_trigger BEFORE UPDATE ON entity
+	FOR EACH ROW EXECUTE PROCEDURE updated_timestamp();
+
+
+DROP TABLE IF EXISTS profile;
+CREATE TABLE profile (
+	id          SERIAL    PRIMARY KEY,
+	entity      INTEGER   NOT NULL REFERENCES entity(id),
+	email       TEXT      NOT NULL UNIQUE,
+	name        TEXT      DEFAULT NULL,
+	description TEXT      DEFAULT NULL,
+	created     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated     TIMESTAMP DEFAULT NULL
+); -- AKA user information
+
+DROP TRIGGER IF EXISTS updated_profile_trigger ON profile;
+CREATE TRIGGER updated_profile_trigger BEFORE UPDATE ON profile
+	FOR EACH ROW EXECUTE PROCEDURE updated_timestamp();
+
+
+DROP TABLE IF EXISTS token;
+CREATE TABLE token (
+	id      SERIAL    PRIMARY KEY,
+	sub     UUID      NOT NULL UNIQUE REFERENCES entity(uuid),
+	refresh TEXT      NOT NULL,
+	created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	updated TIMESTAMP DEFAULT NULL
+); -- AKA request authorization
+
+DROP TRIGGER IF EXISTS updated_token_trigger ON token;
+CREATE TRIGGER updated_token_trigger BEFORE UPDATE ON token
 	FOR EACH ROW EXECUTE PROCEDURE updated_timestamp();
 
 
@@ -121,8 +149,14 @@ CREATE TABLE aspect_warrant (
 INSERT INTO aspect (name)
 VALUES ('gurumojo');
 
-INSERT INTO entity (email, uuid, cipher)
-VALUES ('theguy@gurumojo.net', '00000000-0000-0000-0000-000000000000', '012ABC');
+INSERT INTO entity (uuid, cipher, salt)
+VALUES ('00000000-0000-0000-0000-000000000000', 'd5a73df5fda49b54e2f0bc17329f72dce076650d707fd91abdbf71300c8b5005944c1708a354f422af1558a11fd7730b4930dd945f5ce1c35e4acd3cc4bf5e9f', 'de57b60e14dc1ea4218e05781df293ef28bd15be17d032e371e8137b209cc4b21ed7d99af3f5ddf5116157052ed2cd7123df056267b2d0db688b5b9cf3cd8abe');
+
+INSERT INTO profile (entity, email, name, description)
+VALUES (1, 'theguy@gurumojo.net', 'theguy', 'The Guy @ Guru Mojo');
+
+INSERT INTO token (sub, refresh)
+VALUES ('00000000-0000-0000-0000-000000000000', 'JWT');
 
 INSERT INTO warrant (name)
 VALUES ('*');

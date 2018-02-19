@@ -15,10 +15,9 @@ const {
 	LocalStrategy
 } = require('./strategy');
 
-const HASH_BYTES = 32;
-const HASH_TYPE = 'sha256WithRSAEncryption';
-const ITERATIONS = 20000;
-const SALT_BYTES = 16;
+const HASH_ITERATIONS = 100000;
+const HASH_BYTES = 64;
+const HASH_TYPE = 'sha512';
 
 const strategyConfig = {
 	passReqToCallback: true,
@@ -51,9 +50,9 @@ function isUUID(value) {
 function jwtAccessVerify(request, payload, done) {
 	const sub = get(payload, 'sub');
 	const user = get(payload, 'user');
-	logger.debug(`${namespace}.jwt.access`, {verify: sub});
+	logger.info(`${namespace}.access`, {verify: sub});
 	if (isUUID(sub) && isPlainObject(user)) {
-		successHandler(request, done, user);
+		successHandler(request, done, sub);
 	} else {
 		failureHandler(request, done, {
 			message: 'malformed access token payload',
@@ -63,23 +62,18 @@ function jwtAccessVerify(request, payload, done) {
 	}
 }
 
-const refreshReadSQL = 'SELECT * FROM user WHERE id = $1 AND uuid = $2';
 
 function jwtRefreshVerify(request, payload, done) {
 	const sub = get(payload, 'sub');
 	const auth = get(payload, 'auth');
-	logger.info(`${namespace}.jwt.refresh`, {verify: sub});
+	logger.info(`${namespace}.refresh`, {verify: sub});
 	if (isUUID(sub) && isPlainObject(auth)) {
-		//data.one(refreshReadSQL, [auth.user.id, sub])
-		Promise.resolve(auth)
-		.then(xxx => {
-			request.res.locals.token = {
-				access: sign({sub, user: auth.user}),
-				refresh: sign({sub, auth})
-			}
-			return xxx;
+		data.one(data.query.getToken, {sub})
+		.then(token => {
+			let entity = {uuid: sub};
+			request.res.locals.token = generate(entity, auth.user);
+			return localCache(request, done, entity);
 		})
-		.then(partial(successHandler, request, done))
 		.catch(partial(errorHandler, request, done));
 	} else {
 		failureHandler(request, done, {
@@ -90,30 +84,53 @@ function jwtRefreshVerify(request, payload, done) {
 	}
 }
 
-function hash(password, salt, iterations) {
-	return crypto.pbkdf2Sync(password, salt, iterations, HASH_BYTES, HASH_TYPE).toString('hex');
+
+function hash(secret, salt) {
+	return crypto.pbkdf2Sync(secret, salt, HASH_ITERATIONS, HASH_BYTES, HASH_TYPE).toString('hex');
 }
 
-function localValidate(request, done, user, password, secret) {
-	if (hash(password, secret.salt, +secret.iterations) === secret.hash) {
-		successHandler(request, done, user);
+function generate(entity, privilege) {
+	let auth = objectFromRow(privilege);
+	return {
+		access: sign({sub: entity.uuid, user: auth.user}),
+		refresh: sign({sub: entity.uuid, auth})
+	};
+}
+
+function objectFromRow(privilege) {
+	logger.debug(`${namespace}.transform`, privilege);
+	return {user: privilege};
+}
+
+function localCache(request, done, entity) {
+	data.none(data.query.putToken, {
+		sub: entity.uuid, refresh: request.res.locals.token.refresh
+	})
+	.then(result => {
+		successHandler(request, done, entity.uuid);
+	});
+}
+
+function localValidate(request, done, result) {
+	let [entity, cipher, auth] = result;
+	if (entity.cipher === cipher) {
+		request.res.locals.token = generate(entity, auth);
+		return localCache(request, done, entity);
 	} else {
 		failureHandler(request, done, {login: false, reason: 'password'});
 	}
 }
 
 function localVerify(request, username, password, done) {
-	logger.info(`${namespace}.local`, {verify: 'local', username});
+	logger.info(`${namespace}.local`, {verify: username});
 	data.one(data.query.getEntity, {uuid: username})
-	.then(result => {
-		const user = compact(result).pop();
-		if (user) {
-			data.get(`secret:${user.id}`)
-			.then(partial(localValidate, request, done, user, password))
-			.catch(partial(errorHandler, request, done));
-		} else {
-			failureHandler(request, done, {login: false, reason: 'username'});
-		}
+	.then(entity => {
+		return Promise.all([
+			entity,
+			hash(password, entity.salt),
+			data.one(data.query.getAuth, {entity: entity.id})
+		])
+		.then(partial(localValidate, request, done));
 	})
 	.catch(partial(errorHandler, request, done));
 }
@@ -126,5 +143,6 @@ passport.serializeUser((user, done) => {
 passport.use(new JWTAccessStrategy(strategyConfig, jwtAccessVerify));
 passport.use(new JWTRefreshStrategy(strategyConfig, jwtRefreshVerify));
 passport.use(new LocalStrategy(strategyConfig, localVerify));
+
 
 module.exports = passport;

@@ -31,6 +31,17 @@ const pgOptions = {
 
 const exitDelayMilliseconds = 100;
 
+const api = {
+	any: null,
+	many: null,
+	map: null,
+	none: null,
+	one: null,
+	query: null,
+	release: null,
+	status: null
+};
+
 
 function deferredExit(code) {
 	setTimeout(() => {
@@ -38,17 +49,28 @@ function deferredExit(code) {
 	}, exitDelayMilliseconds);
 }
 
+function cache(pg) {
+	Object.assign(api, facade(pg), {
+		release: () => {postgres.release(pg); Object.keys(api).reduce(purge, api)},
+		status: () => postgres.status(pg)
+	});
+}
+
 function init() {
 	return postgres.bootstrap(pgOptions, dbOptions)
 	.then(() => postgres.connect(dbOptions))
-	.then(pg => Object.assign(facade(pg), {
-		release: () => postgres.release(pg),
-		status: () => postgres.status(pg)
-	}))
+	.then(cache)
 	.catch(e => {
 		deferredExit(1);
 	});
 }
 
+function purge(target, member) {
+	delete target[member];
+	return target;
+}
 
-module.exports = init();
+
+init();
+
+module.exports = api;
