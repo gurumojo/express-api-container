@@ -1,7 +1,5 @@
 'use strict';
 const bodyParser = require('body-parser');
-const cores = require('os').cpus().length;
-const readdir = require('fs').readdirSync;
 const {get, partial} = require('lodash');
 
 const constant = require('./library/constant');
@@ -9,10 +7,14 @@ const discover = require('./library/discover');
 const json = require('./library/json');
 const logger = require('./library/logger');
 const network = require('./library/network');
-const pubsub = require('./library/pubsub');
+//const pubsub = require('./library/pubsub');
 const router = require('./library/router');
 const status = require('./library/status');
 const {passport} = require('./library/token');
+
+const host = network().reduce((value, candidate) => {
+	return candidate === '127.0.0.1' ? value : candidate;
+}, null);
 
 const namespace = `${constant.API_NAME}`;
 
@@ -24,10 +26,10 @@ function catchall(request, response) {
 function delegate(channel, message) {
 	const object = json.object(message);
 	if (get(object, 'error')) {
-		logger.error(`${namespace}.delegate`, error);
+		logger.error(`${channel}.delegate`, error);
 	}
 	if (!get(object, 'subscribe')) {
-		logger.info(`${namespace}.delegate`, object);
+		logger.info(`${channel}.delegate`, object);
 	}
 }
 
@@ -50,10 +52,13 @@ discover(`${__dirname}/route`)
 
 service.use('/', guard({secure: true}), catchall);
 
-service.listen(constant.EXPRESS_PORT, () => {
-	logger.info(`${namespace}.listen`, {
-		host: json.string(network()),
-		port: constant.EXPRESS_PORT
-	});
-	pubsub.subscribe(namespace, delegate);
-});
+//Array(constant.CPU_COUNT).fill(null, 0, constant.CPU_COUNT)
+//.map((x, i) => {
+//	const port = i + constant.EXPRESS_PORT;
+	const port = constant.EXPRESS_PORT;
+	service.listen(port, () => {
+		logger.info(`${namespace}.listen`, {host, port});
+	})
+//});
+
+//pubsub.subscribe(namespace, delegate);

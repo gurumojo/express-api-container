@@ -3,6 +3,12 @@
   "version": "0.1.0",
   "description": "Docker Container for Express API Service",
   "author": "theguy@gurumojo.net",
+  "license": "ISC",
+  "homepage": "https://github.com/gurumojo/express-api-container#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gurumojo/express-api-container.git"
+  },
   "bugs": {
     "url": "https://github.com/gurumojo/express-api-container/issues"
   },
@@ -20,16 +26,14 @@
     "passport-strategy": "^1.0.0",
     "pg-promise": "^7.4.1",
     "redis": "^2.8.0",
+    "request": "^2.83.0",
+    "request-promise": "^4.2.2",
+    "require-dir": "^0.3.2",
     "winston": "^2.4.0"
   },
-  "homepage": "https://github.com/gurumojo/express-api-container#readme",
-  "license": "ISC",
   "main": "service.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/gurumojo/express-api-container.git"
-  },
   "scripts": {
+    "status": "./bin/status.js",
     "test": "echo 'Error: no test specified' && exit 1"
   }
 }

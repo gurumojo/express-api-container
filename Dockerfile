@@ -4,7 +4,7 @@ LABEL gurumojo.service=express-api
 
 EXPOSE 8000
 
-COPY healthcheck.sh /usr/local/bin/container-healthcheck
+COPY bin/healthcheck.sh /usr/local/bin/container-healthcheck
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
 	CMD ["container-healthcheck"]
 

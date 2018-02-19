@@ -104,7 +104,7 @@ function localValidate(request, done, user, password, secret) {
 
 function localVerify(request, username, password, done) {
 	logger.info(`${namespace}.local`, {verify: 'local', username});
-	data.search('user', 'handle', username)
+	data.one(data.query.getEntity, {uuid: username})
 	.then(result => {
 		const user = compact(result).pop();
 		if (user) {

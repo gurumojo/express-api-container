@@ -1,11 +1,5 @@
 {
-	"jwt": {
-		"secret": ""
-	},
-	"postgres": {
-		"secret": ""
-	},
-	"redis": {
-		"secret": ""
-	}
+	"POSTGRES_API_PASSWORD": "s3cR3t",
+	"POSTGRES_PASSWORD": "s3cR3t",
+	"REDIS_PASSWORD": "s3cR3t"
 }
