@@ -71,6 +71,7 @@ function jwtRefreshVerify(request, payload, done) {
 		data.one(data.query.getToken, {sub})
 		.then(token => {
 			let entity = {uuid: sub};
+			logger.debug(`${namespace}`, {'':json.string({token, sub, auth})});
 			request.res.locals.token = generate(entity, auth.user);
 			return localCache(request, done, entity);
 		})
@@ -89,21 +90,23 @@ function hash(secret, salt) {
 	return crypto.pbkdf2Sync(secret, salt, HASH_ITERATIONS, HASH_BYTES, HASH_TYPE).toString('hex');
 }
 
-function generate(entity, privilege) {
-	let auth = objectFromRow(privilege);
-	return {
+function generate(entity, payload) {
+	let auth = objectFromRow(payload);
+	let token = {
 		access: sign({sub: entity.uuid, user: auth.user}),
 		refresh: sign({sub: entity.uuid, auth})
 	};
+	logger.debug(`${namespace}.generate`, {'': json.string(token)});
+	return token;
 }
 
-function objectFromRow(privilege) {
-	logger.debug(`${namespace}.transform`, privilege);
-	return {user: privilege};
+function objectFromRow(payload) {
+	logger.debug(`${namespace}.transform`, payload);
+	return {user: payload};
 }
 
 function localCache(request, done, entity) {
-	data.none(data.query.putToken, {
+	return data.none(data.query.putToken, {
 		sub: entity.uuid, refresh: request.res.locals.token.refresh
 	})
 	.then(result => {
@@ -112,9 +115,9 @@ function localCache(request, done, entity) {
 }
 
 function localValidate(request, done, result) {
-	let [entity, cipher, auth] = result;
+	let [entity, cipher, payload] = result;
 	if (entity.cipher === cipher) {
-		request.res.locals.token = generate(entity, auth);
+		request.res.locals.token = generate(entity, payload);
 		return localCache(request, done, entity);
 	} else {
 		failureHandler(request, done, {login: false, reason: 'password'});

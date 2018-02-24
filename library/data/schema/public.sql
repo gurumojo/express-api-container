@@ -132,16 +132,16 @@ CREATE TABLE warrant (
 
 DROP TABLE IF EXISTS aspect_entity;
 CREATE TABLE aspect_entity (
-	aspect INTEGER NOT NULL REFERENCES aspect(id),
-	entity INTEGER NOT NULL REFERENCES entity(id),
+	aspect INTEGER NOT NULL,
+	entity INTEGER NOT NULL,
 	UNIQUE (aspect, entity)
 ); -- 1:n aspect to entity joins AKA role users
 
 
 DROP TABLE IF EXISTS aspect_warrant;
 CREATE TABLE aspect_warrant (
-	aspect  INTEGER NOT NULL REFERENCES aspect(id),
-	warrant INTEGER NOT NULL REFERENCES warrant(id),
+	aspect  INTEGER NOT NULL,
+	warrant INTEGER NOT NULL,
 	UNIQUE (aspect, warrant)
 ); -- 1:n aspect to warrant joins AKA role permissions
 
@@ -159,7 +159,7 @@ INSERT INTO token (sub, refresh)
 VALUES ('00000000-0000-0000-0000-000000000000', 'JWT');
 
 INSERT INTO warrant (name)
-VALUES ('*');
+VALUES ('*'), ('@');
 
 INSERT INTO aspect_entity (aspect, entity)
 VALUES (1, 1);
