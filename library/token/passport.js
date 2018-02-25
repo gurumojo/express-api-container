@@ -126,7 +126,7 @@ function localValidate(request, done, result) {
 
 function localVerify(request, username, password, done) {
 	logger.info(`${namespace}.local`, {verify: username});
-	data.one(data.query.getEntity, {uuid: username})
+	data.one(data.query.getCredential, {uuid: username})
 	.then(entity => {
 		return Promise.all([
 			entity,

@@ -5,7 +5,7 @@ const {partial} = require('lodash');
 const constant = require('./constant');
 const logger = require('./logger');
 
-const blacklist = /index.js|node_modules|package.json|yarn.lock/;
+const blacklist = /index.js|node_modules|package.json|package-lock.json/;
 
 const namespace = `${constant.API_NAME}.discover`;
 

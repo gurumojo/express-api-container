@@ -1,116 +1,183 @@
 'use strict';
 
 const constant = require('./constant');
+const freeze = require('./freeze');
 
-const status = Object.freeze({
+const status = freeze({
 	accepted: {
-		code: constant.HTTP_STATUS_ACCEPTED,
-		header: {'X-HTTP-Status-Location': undefined},
-		message: 'The request was accepted for processing.',
-		text: 'ACCEPTED'
+		status: constant.HTTP_STATUS_ACCEPTED,
+		headers: {'X-HTTP-Status-Location': null},
+		body: {
+			data: null,
+			message: 'The request was accepted for processing.',
+			status: 'ACCEPTED'
+		}
 	},
 	badGateway: {
-		code: constant.HTTP_STATUS_BAD_GATEWAY,
-		header: {'X-HTTP-Gateway-Location': undefined},
-		message: 'The proxy for this request was not found.',
-		text: 'BAD_GATEWAY'
+		status: constant.HTTP_STATUS_BAD_GATEWAY,
+		headers: {'X-HTTP-Gateway-Location': null},
+		body: {
+			data: null,
+			message: 'The proxy for this request was not found.',
+			status: 'BAD_GATEWAY'
+		}
 	},
 	badRequest: {
-		code: constant.HTTP_STATUS_BAD_REQUEST,
-		message: 'The request was malformed. Consult API documentation.',
-		text: 'BAD_REQUEST'
+		status: constant.HTTP_STATUS_BAD_REQUEST,
+		headers: null,
+		body: {
+			data: null,
+			message: 'The request was malformed. Consult API documentation.',
+			status: 'BAD_REQUEST'
+		}
 	},
 	conflict: {
-		code: constant.HTTP_STATUS_CONFLICT,
-		message: 'The request conflicts with resource state rules.',
-		text: 'CONFLICT'
+		status: constant.HTTP_STATUS_CONFLICT,
+		headers: null,
+		body: {
+			data: null,
+			message: 'The request conflicts with resource state rules.',
+			status: 'CONFLICT'
+		}
 	},
 	created: {
-		code: constant.HTTP_STATUS_CREATED,
-		header: {
-			'Content-Type': undefined,
-			'ETag': undefined,
-			'Location': undefined
+		status: constant.HTTP_STATUS_CREATED,
+		headers: {
+			'Content-Type': null,
+			'ETag': null,
+			'Location': null
 		},
-		message: 'The requested resource was created.',
-		text: 'CREATED'
+		body: {
+			data: null,
+			message: 'The requested resource was created.',
+			status: 'CREATED'
+		}
 	},
 	forbidden: {
-		code: constant.HTTP_STATUS_FORBIDDEN,
-		header: {'X-HTTP-Permission-Required': undefined},
-		message: 'The requested resource requires more priviledge.',
-		text: 'FORBIDDEN'
+		status: constant.HTTP_STATUS_FORBIDDEN,
+		headers: {'X-HTTP-Permission-Required': null},
+		body: {
+			data: null,
+			message: 'The requested resource requires more priviledge.',
+			status: 'FORBIDDEN'
+		}
 	},
 	gatewayTimeout: {
-		code: constant.HTTP_STATUS_GATEWAY_TIMEOUT,
-		header: {'X-HTTP-Gateway-Location': undefined},
-		message: 'The proxy for this request failed to respond.',
-		text: 'GATEWAY_TIMEOUT'
+		status: constant.HTTP_STATUS_GATEWAY_TIMEOUT,
+		headers: {'X-HTTP-Gateway-Location': null},
+		body: {
+			data: null,
+			message: 'The proxy for this request failed to respond.',
+			status: 'GATEWAY_TIMEOUT'
+		}
 	},
 	gone: {
-		code: constant.HTTP_STATUS_GONE,
-		message: 'The requested resource was removed.',
-		text: 'GONE'
+		status: constant.HTTP_STATUS_GONE,
+		headers: null,
+		body: {
+			data: null,
+			message: 'The requested resource was removed.',
+			status: 'GONE'
+		}
 	},
 	internalServerError: {
-		code: constant.HTTP_STATUS_INTERNAL_SERVER_ERROR,
-		message: 'The service encountered an unexpected exception.',
-		text: 'INTERNAL_SERVER_ERROR'
+		status: constant.HTTP_STATUS_INTERNAL_SERVER_ERROR,
+		headers: null,
+		body: {
+			data: null,
+			message: 'The service encountered an unexpected exception.',
+			status: 'INTERNAL_SERVER_ERROR'
+		}
 	},
 	methodNotAllowed: {
-		code: constant.HTTP_STATUS_METHOD_NOT_ALLOWED,
-		header: {'Allow': undefined},
-		message: 'The requested method is not allowed for this route.',
-		text: 'METHOD_NOT_ALLOWED'
+		status: constant.HTTP_STATUS_METHOD_NOT_ALLOWED,
+		headers: {'Allow': null},
+		body: {
+			data: null,
+			message: 'The requested method is not allowed for this route.',
+			status: 'METHOD_NOT_ALLOWED'
+		}
 	},
 	nonauthoritativeInformation: {
-		code: constant.HTTP_STATUS_NONAUTHORITATIVE_INFORMATION,
-		header: {'X-HTTP-Information-Source': undefined},
-		message: 'The request was fulfilled with non-authoritative information.',
-		text: 'NONAUTHORITATIVE_INFORMATION'
+		status: constant.HTTP_STATUS_NONAUTHORITATIVE_INFORMATION,
+		headers: {'X-HTTP-Information-Source': null},
+		body: {
+			data: null,
+			message: 'The request was fulfilled with non-authoritative information.',
+			status: 'NONAUTHORITATIVE_INFORMATION'
+		}
 	},
 	notAcceptable: {
-		code: constant.HTTP_STATUS_NOT_ACCEPTABLE,
-		header: {'Content-Type': undefined},
-		message: 'The requested response type is not available.',
-		text: 'NOT_ACCEPTABLE'
+		status: constant.HTTP_STATUS_NOT_ACCEPTABLE,
+		headers: {'Content-Type': null},
+		body: {
+			data: null,
+			message: 'The requested response type is not available.',
+			status: 'NOT_ACCEPTABLE'
+		}
 	},
 	notFound: {
-		code: constant.HTTP_STATUS_NOT_FOUND,
-		message: 'The requested resource does not seem to exist.',
-		text: 'NOT_FOUND'
+		status: constant.HTTP_STATUS_NOT_FOUND,
+		headers: null,
+		body: {
+			data: null,
+			message: 'The requested resource does not seem to exist.',
+			status: 'NOT_FOUND'
+		}
 	},
 	noContent: {
-	 	code: constant.HTTP_STATUS_NO_CONTENT,
-	 	message: 'The request succeeded without returning anything.',
-	 	text: 'NO_CONTENT'
+	 	status: constant.HTTP_STATUS_NO_CONTENT,
+		headers: null,
+		body: null /* {
+			data: null,
+	 		message: 'The request succeeded without returning anything.',
+	 		status: 'NO_CONTENT'
+		} The 204 response MUST NOT include a message-body */
 	},
 	ok: {
-		code: constant.HTTP_STATUS_OK,
-		message: 'The request succeeded.',
-		text: 'OK'
+		status: constant.HTTP_STATUS_OK,
+		headers: null,
+		body: {
+			data: null,
+			message: 'The request succeeded.',
+			status: 'OK'
+		}
 	},
 	requestTimeout: {
-		code: constant.HTTP_STATUS_REQUEST_TIMEOUT,
-		message: 'The requested resource timed out before returning a response.',
-		text: 'REQUEST_TIMEOUT'
+		status: constant.HTTP_STATUS_REQUEST_TIMEOUT,
+		headers: null,
+		body: {
+			data: null,
+			message: 'The requested resource timed out before returning a response.',
+			status: 'REQUEST_TIMEOUT'
+		}
 	},
 	resetContent: {
-		code: constant.HTTP_STATUS_RESET_CONTENT,
-		message: 'The request succeeded. Reset form inputs.',
-		text: 'RESET_CONTENT'
+		status: constant.HTTP_STATUS_RESET_CONTENT,
+		headers: null,
+		body: null /* {
+			data: null,
+			message: 'The request succeeded. Reset form inputs.',
+			status: 'RESET_CONTENT'
+		} The 205 response MUST NOT include a message-body */
 	},
 	serviceUnavailable: {
-		code: constant.HTTP_STATUS_SERVICE_UNAVAILABLE,
-		header: {'Retry-After': undefined},
-		message: 'The requested service is currently unavailable. Try again later.',
-		text: 'SERVICE_UNAVAILABLE'
+		status: constant.HTTP_STATUS_SERVICE_UNAVAILABLE,
+		headers: {'Retry-After': null},
+		body: {
+			data: null,
+			message: 'The requested service is currently unavailable. Try again later.',
+			status: 'SERVICE_UNAVAILABLE'
+		}
 	},
 	unauthorized: {
-		code: constant.HTTP_STATUS_UNAUTHORIZED,
-		header: {'WWW-Authenticate': undefined},
-		message: 'The requested resource is not allowed without authentication.',
-		text: 'UNAUTHORIZED'
+		status: constant.HTTP_STATUS_UNAUTHORIZED,
+		headers: {'WWW-Authenticate': null},
+		body: {
+			data: null,
+			message: 'The requested resource is not allowed without authentication.',
+			status: 'UNAUTHORIZED'
+		}
 	}
 });
 

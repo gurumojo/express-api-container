@@ -6,9 +6,11 @@ const SQL = {
 
 	getAuth, // ... $[entity] ...
 
-	getEntity: `SELECT * FROM entity WHERE uuid = $[uuid]`,
+	getCredential: `SELECT * FROM entity WHERE uuid = $[uuid]`,
 
-	getProfile: `SELECT * FROM profile WHERE entity = $[entity]`,
+	getEntity: `SELECT * FROM entity WHERE id = $[entity]`,
+
+	getProfile: `SELECT * FROM profile WHERE entity_id = $[entity]`,
 
 	getToken: `SELECT * FROM token WHERE sub = $[sub]`,
 
