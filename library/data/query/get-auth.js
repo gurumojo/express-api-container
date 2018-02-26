@@ -12,6 +12,7 @@ WITH
 	),
 	a_e AS (
 		SELECT
+			e.id,
 			a.name AS an,
 			e.uuid AS en
 		FROM aspect a
@@ -20,10 +21,11 @@ WITH
 		WHERE e.id = $[entity]
 	)
 SELECT
-	a_e.an,
-	a_e.en,
-	array_agg(a_w.wn)
+	a_e.id,
+	a_e.en AS entity,
+	a_e.an AS aspect,
+	array_agg(a_w.wn) AS warrant
 FROM a_e
 JOIN a_w ON a_e.an = a_w.an
-GROUP BY a_e.an, a_w.an, a_e.en
+GROUP BY a_e.an, a_w.an, a_e.id, a_e.en
 `;

@@ -12,6 +12,9 @@
   "bugs": {
     "url": "https://github.com/gurumojo/express-api-container/issues"
   },
+  "devDependencies": {
+    "intern": "^4.0.0-rc.1"
+  },
   "dependencies": {
     "bluebird": "^3.5.1",
     "body-parser": "^1.18.2",
@@ -29,12 +32,14 @@
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
     "require-all": "^2.2.0",
-    "require-dir": "^0.3.2",
     "winston": "^2.4.0"
   },
-  "main": "service.js",
+  "engines": {
+    "node": ">=8.2"
+  },
   "scripts": {
     "status": "./bin/status.js",
-    "test": "echo 'Error: no test specified' && exit 1"
-  }
+    "test": "intern"
+  },
+  "main": "service.js"
 }

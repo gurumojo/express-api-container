@@ -35,6 +35,7 @@ const api = {
 	any: null,
 	many: null,
 	map: null,
+	maybe: null,
 	none: null,
 	one: null,
 	query: null,
@@ -49,7 +50,7 @@ function deferredExit(code) {
 	}, exitDelayMilliseconds);
 }
 
-function cache(pg) {
+function enableAPI(pg) {
 	Object.assign(api, facade(pg), {
 		release: () => {postgres.release(pg); Object.keys(api).reduce(purge, api)},
 		status: () => postgres.status(pg)
@@ -59,7 +60,7 @@ function cache(pg) {
 function init() {
 	return postgres.bootstrap(pgOptions, dbOptions)
 	.then(() => postgres.connect(dbOptions))
-	.then(cache)
+	.then(enableAPI)
 	.catch(e => {
 		deferredExit(1);
 	});

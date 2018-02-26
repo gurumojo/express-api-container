@@ -32,6 +32,13 @@ function map(pg, query, input, transform) {
 	.catch(e => logger.error(`${namespace}.map`, {failure: e.stack}));
 }
 
+function maybe(pg, query, input) {
+	logger.debug(`${namespace}.maybe`, {query, input: json.string(input)});
+	return pg.oneOrNone(query, input)
+	.tap(o => logger.debug(`${namespace}.maybe`, {result: json.string(o)}))
+	.catch(e => logger.error(`${namespace}.maybe`, {failure: e.stack}));
+}
+
 function none(pg, query, input) {
 	logger.debug(`${namespace}.none`, {query, input: json.string(input)});
 	return pg.none(query, input)
@@ -51,6 +58,7 @@ module.exports = (pg) => ({
 	any: partial(any, pg),
 	many: partial(many, pg),
 	map: partial(map, pg),
+	maybe: partial(maybe, pg),
 	none: partial(none, pg),
 	one: partial(one, pg),
 	query: sql.query

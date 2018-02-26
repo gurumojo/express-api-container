@@ -1,0 +1,36 @@
+{
+  "description": "Express API Container",
+  "node": {
+    "suites": [ "test/type/cli/**/*.js" ]
+  },
+  "browser": {
+    "suites": [ "test/type/dom/**/*.js" ]
+  },
+  "environments": [
+    { "browserName": "node" },
+    {
+      "browserName": "chrome",
+      "fixSessionCapabilities": "no-detect",
+      "chromeOptions": { "args": ["headless", "disable-gpu"] }
+    }
+  ],
+  "configs": {
+    "dev": {
+      "description": "local",
+      "reporters": [ "runner" ],
+      "suites+": [ "test/env/local/**/*.js" ]
+    },
+    "ci": {
+      "bail": true,
+      "description": "build",
+      "reporters": [ "junit" ],
+      "suites+": [ "test/env/build/**/*.js" ]
+    },
+    "stage": {
+      "bail": true,
+      "description": "demo",
+      "reporters": [ "benchmark" ],
+      "suites+": [ "test/env/demo/**/*.js" ]
+    }
+  }
+}
