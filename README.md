@@ -9,6 +9,7 @@ Docker Container for Express API Service
 This project is intended as the base layer in a Docker container collection.
 Extending from this core service framework requires:
 
+* creating a new service repository
 * declaring a Dockerfile that builds from an image created by this package
 * copying in any necessary filesystem changes (e.g. route definitions, db patches)
 * starting up a container instance
@@ -25,6 +26,7 @@ patch migrations, pubsub channel subscriptions for responding to system events
 other than direct user agent requests, token based authentication, role based
 access control, unit and functional test coverage, and a whole lot of love.
 
+Note: All times are saved and served in UTC.
 
 
 ## Usage

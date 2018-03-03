@@ -2,13 +2,14 @@
 const Promise = require('bluebird');
 const {pick} = require('lodash');
 
-const template = require('../../library/response');
 const json = require('../../library/json');
 const logger = require('../../library/logger');
+const template = require('../../library/response');
+const time = require('../../library/time');
 const {API_NAME} = require('../../library/constant');
 const {serverError} = require('../../library/handler');
 
-const entityFields = [
+const entityWhitelist = [
 	'id',
 	'uuid',
 	'created',
@@ -18,14 +19,20 @@ const entityFields = [
 const namespace = `${API_NAME}.route.handler.get-user`;
 
 
+function buildUser(entity, profile) {
+	let account = pick(entity, entityWhitelist);
+	return Object.assign(account, profile, time.resolve(account, profile));
+}
+
 function getUser(request, response) {
 	let db = request.data;
+	let id = request.params.entityID;
 	return Promise.all([
-		db.one(db.query.getEntity, {entity: request.params.entity}),
-		db.one(db.query.getProfile, {entity: request.params.entity})
+		db.one(db.query.getEntity, {id}),
+		db.one(db.query.getProfile, {entityID: id})
 	])
 	.then(([entity, profile]) => {
-		response.locals.body = Object.assign(profile, pick(entity, entityFields));
+		response.locals.body = buildUser(entity, profile);
 		template.ok.dispatch(response);
 	})
 	.catch(x => {

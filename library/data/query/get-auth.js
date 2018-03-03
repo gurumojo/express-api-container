@@ -18,7 +18,7 @@ WITH
 		FROM aspect a
 		JOIN aspect_entity ae ON ae.aspect = a.id
 		JOIN entity e ON e.id = ae.entity
-		WHERE e.id = $[entity]
+		WHERE e.id = $[entityID]
 	)
 SELECT
 	a_e.id,

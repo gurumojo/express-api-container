@@ -6,7 +6,7 @@ const getUserList = require('./handler/get-user-list');
 const putUser = require('./handler/put-user');
 
 
-user.get('/:entity', getUser);
+user.get('/:entityID', getUser);
 
 user.get('/', getUserList);
 

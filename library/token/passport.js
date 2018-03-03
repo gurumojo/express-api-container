@@ -129,7 +129,7 @@ function localVerify(request, username, password, done) {
 		return Promise.all([
 			entity,
 			hash(password, entity.salt),
-			data.one(data.query.getAuth, {entity: entity.id})
+			data.one(data.query.getAuth, {entityID: entity.id})
 		])
 		.then(partial(localValidate, request, done));
 	})

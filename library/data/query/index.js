@@ -4,13 +4,13 @@ const getAuth = require('./get-auth');
 
 const SQL = {
 
-	getAuth, // ... $[entity] ...
+	getAuth, // ... $[entityID] ...
 
 	getCredential: `SELECT * FROM entity WHERE uuid = $[uuid]`,
 
-	getEntity: `SELECT * FROM entity WHERE id = $[entity]`,
+	getEntity: `SELECT * FROM entity WHERE id = $[id]`,
 
-	getProfile: `SELECT * FROM profile WHERE entity_id = $[entity]`,
+	getProfile: `SELECT * FROM profile WHERE entity_id = $[entityID]`,
 
 	getToken: `SELECT * FROM token WHERE sub = $[sub]`,
 
