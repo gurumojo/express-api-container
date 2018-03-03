@@ -10,10 +10,14 @@ const namespace = `${constant.API_NAME}.request`;
 
 
 function requestLogger(request, response, next) {
-	const method = isStatusRoute(request) ? 'debug' : 'info';
+	let body = json.string(request.body) || request.body;
+	let method = isStatusRoute(request) ? 'debug' : 'info';
 	logger[method](namespace, Object.assign(
 		pick(request, constant.LOGGER_WHITELIST_EXPRESS_REQUEST),
-		{body: json.string(request.body)}
+		{
+			body: body === '{}' ? null : body,
+			headers: json.string(request.headers)
+		}
 	));
 	next();
 }
