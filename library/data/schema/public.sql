@@ -96,7 +96,7 @@ CREATE TRIGGER updated_entity_trigger BEFORE UPDATE ON entity
 DROP TABLE IF EXISTS profile;
 CREATE TABLE profile (
 	id          SERIAL    PRIMARY KEY,
-	entity      INTEGER   NOT NULL REFERENCES entity(id),
+	entity_id   INTEGER   NOT NULL REFERENCES entity(id),
 	email       TEXT      NOT NULL UNIQUE,
 	name        TEXT      DEFAULT NULL,
 	description TEXT      DEFAULT NULL,
@@ -152,7 +152,7 @@ VALUES ('gurumojo');
 INSERT INTO entity (uuid, cipher, salt)
 VALUES ('00000000-0000-0000-0000-000000000000', 'd5a73df5fda49b54e2f0bc17329f72dce076650d707fd91abdbf71300c8b5005944c1708a354f422af1558a11fd7730b4930dd945f5ce1c35e4acd3cc4bf5e9f', 'de57b60e14dc1ea4218e05781df293ef28bd15be17d032e371e8137b209cc4b21ed7d99af3f5ddf5116157052ed2cd7123df056267b2d0db688b5b9cf3cd8abe');
 
-INSERT INTO profile (entity, email, name, description)
+INSERT INTO profile (entity_id, email, name, description)
 VALUES (1, 'theguy@gurumojo.net', 'theguy', 'The Guy @ Guru Mojo');
 
 INSERT INTO token (sub, refresh)

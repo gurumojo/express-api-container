@@ -1,9 +1,11 @@
 'use strict';
 const Promise = require('bluebird');
+const {pick} = require('lodash');
 
-const constant = require('../../library/constant');
-const data = require('../../library/data');
+const template = require('../../library/response');
+const json = require('../../library/json');
 const logger = require('../../library/logger');
+const {API_NAME} = require('../../library/constant');
 const {serverError} = require('../../library/handler');
 
 const entityFields = [
@@ -13,15 +15,19 @@ const entityFields = [
 	'updated'
 ];
 
-const namespace = `${constant.API_NAME}.route.handler.get-user`;
+const namespace = `${API_NAME}.route.handler.get-user`;
 
 
 function getUser(request, response) {
+	let db = request.data;
 	return Promise.all([
-		data.one(data.query.getEntity, {entity: request.params.entity}),
-		data.one(data.query.getProfile, {entity: request.params.entity})
+		db.one(db.query.getEntity, {entity: request.params.entity}),
+		db.one(db.query.getProfile, {entity: request.params.entity})
 	])
-	.then(([entity, profile]) => Object.assign(profile, pick(entity, entityFields)))
+	.then(([entity, profile]) => {
+		response.locals.body = Object.assign(profile, pick(entity, entityFields));
+		template.ok.dispatch(response);
+	})
 	.catch(x => {
 		if (x.status) {
 			logger.warn(namespace, {failure: x.message});

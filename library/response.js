@@ -13,7 +13,7 @@ const make = template(base, {imports: {json}});
 function dispatch(body, headers, status, response) {
 	response.set(Object.assign({}, headers, response.locals.headers))
 	.status(status)
-	.send(defaultsDeep(response.locals.body, body));
+	.send(defaultsDeep({data: response.locals.body}, body));
 }
 
 function factory(object, member) {
