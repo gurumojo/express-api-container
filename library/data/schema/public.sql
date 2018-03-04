@@ -1,7 +1,7 @@
 -- Public Schema Definition for Node Express HTTP API
 
 
-DROP TYPE IF EXISTS node;
+DROP TYPE IF EXISTS node CASCADE;
 CREATE TYPE node AS ENUM
 	('gateway','lambda','event','resource','cache','database');
 
@@ -24,7 +24,7 @@ END;$$ LANGUAGE plpgsql;
 -- COMMIT;
 
 
-DROP TABLE IF EXISTS config;
+DROP TABLE IF EXISTS config CASCADE;
 CREATE TABLE config (
 	id      SERIAL    PRIMARY KEY,
 	uuid    UUID      NOT NULL UNIQUE,
@@ -37,7 +37,6 @@ CREATE TABLE config (
 	updated TIMESTAMP DEFAULT NULL
 );
 
-DROP TRIGGER IF EXISTS updated_config_trigger ON config;
 CREATE TRIGGER updated_config_trigger BEFORE UPDATE ON config
 	FOR EACH ROW EXECUTE PROCEDURE updated_timestamp();
 
@@ -52,9 +51,9 @@ CREATE TABLE service (
 	updated   TIMESTAMP DEFAULT NULL
 );
 
-DROP TRIGGER IF EXISTS updated_service_trigger ON service;
 CREATE TRIGGER updated_service_trigger BEFORE UPDATE ON service
 	FOR EACH ROW EXECUTE PROCEDURE updated_timestamp();
+
 
 
 INSERT INTO config (uuid, name, active, json)
@@ -66,19 +65,13 @@ VALUES (1, 'express-api', 'api');
 
 
 
+
 -- Public Schema Definition for Role Based Access Control
 
 -- aspects define the warranted behavior of related entities
 
 
-DROP TABLE IF EXISTS aspect;
-CREATE TABLE aspect (
-	id   SERIAL PRIMARY KEY,
-	name TEXT   NOT NULL UNIQUE
-); -- AKA role
-
-
-DROP TABLE IF EXISTS entity;
+DROP TABLE IF EXISTS entity CASCADE;
 CREATE TABLE entity (
 	id          SERIAL    PRIMARY KEY,
 	uuid        UUID      NOT NULL UNIQUE,
@@ -88,7 +81,6 @@ CREATE TABLE entity (
 	updated     TIMESTAMP DEFAULT NULL
 ); -- AKA user credentials
 
-DROP TRIGGER IF EXISTS updated_entity_trigger ON entity;
 CREATE TRIGGER updated_entity_trigger BEFORE UPDATE ON entity
 	FOR EACH ROW EXECUTE PROCEDURE updated_timestamp();
 
@@ -100,70 +92,89 @@ CREATE TABLE profile (
 	email       TEXT      NOT NULL UNIQUE,
 	name        TEXT      DEFAULT NULL,
 	description TEXT      DEFAULT NULL,
+	content     JSONB     DEFAULT '{}',
 	created     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	updated     TIMESTAMP DEFAULT NULL
 ); -- AKA user information
 
-DROP TRIGGER IF EXISTS updated_profile_trigger ON profile;
 CREATE TRIGGER updated_profile_trigger BEFORE UPDATE ON profile
 	FOR EACH ROW EXECUTE PROCEDURE updated_timestamp();
+
+
+DROP TABLE IF EXISTS aspect;
+CREATE TABLE aspect (
+	id          SERIAL PRIMARY KEY,
+	name        TEXT   NOT NULL UNIQUE,
+	description TEXT   NOT NULL
+); -- AKA role
+
+
+DROP TABLE IF EXISTS warrant;
+CREATE TABLE warrant (
+	id          SERIAL PRIMARY KEY,
+	name        TEXT   NOT NULL,
+	description TEXT   NOT NULL
+); -- AKA permission
+
+
+DROP TABLE IF EXISTS entity_aspect;
+CREATE TABLE entity_aspect (
+	aspect_id INTEGER NOT NULL,
+	entity_id INTEGER NOT NULL,
+	UNIQUE (aspect_id, entity_id)
+); -- n:n entity to aspect joins AKA user roles
+
+
+DROP TABLE IF EXISTS aspect_warrant;
+CREATE TABLE aspect_warrant (
+	aspect_id  INTEGER NOT NULL,
+	warrant_id INTEGER NOT NULL,
+	UNIQUE (aspect_id, warrant_id)
+); -- n:n aspect to warrant joins AKA role permissions
 
 
 DROP TABLE IF EXISTS token;
 CREATE TABLE token (
 	id      SERIAL    PRIMARY KEY,
 	sub     UUID      NOT NULL UNIQUE REFERENCES entity(uuid),
-	refresh TEXT      NOT NULL,
+	refresh TEXT      NOT NULL UNIQUE,
 	created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	updated TIMESTAMP DEFAULT NULL
 ); -- AKA request authorization
 
-DROP TRIGGER IF EXISTS updated_token_trigger ON token;
 CREATE TRIGGER updated_token_trigger BEFORE UPDATE ON token
 	FOR EACH ROW EXECUTE PROCEDURE updated_timestamp();
 
 
-DROP TABLE IF EXISTS warrant;
-CREATE TABLE warrant (
-	id   SERIAL PRIMARY KEY,
-	name TEXT   NOT NULL
-); -- AKA permission
-
-
-DROP TABLE IF EXISTS aspect_entity;
-CREATE TABLE aspect_entity (
-	aspect INTEGER NOT NULL,
-	entity INTEGER NOT NULL,
-	UNIQUE (aspect, entity)
-); -- 1:n aspect to entity joins AKA role users
-
-
-DROP TABLE IF EXISTS aspect_warrant;
-CREATE TABLE aspect_warrant (
-	aspect  INTEGER NOT NULL,
-	warrant INTEGER NOT NULL,
-	UNIQUE (aspect, warrant)
-); -- 1:n aspect to warrant joins AKA role permissions
-
-
-INSERT INTO aspect (name)
-VALUES ('gurumojo');
 
 INSERT INTO entity (uuid, cipher, salt)
-VALUES ('00000000-0000-0000-0000-000000000000', 'd5a73df5fda49b54e2f0bc17329f72dce076650d707fd91abdbf71300c8b5005944c1708a354f422af1558a11fd7730b4930dd945f5ce1c35e4acd3cc4bf5e9f', 'de57b60e14dc1ea4218e05781df293ef28bd15be17d032e371e8137b209cc4b21ed7d99af3f5ddf5116157052ed2cd7123df056267b2d0db688b5b9cf3cd8abe');
+VALUES
+('00000000-0000-0000-0000-000000000000', 'd5a73df5fda49b54e2f0bc17329f72dce076650d707fd91abdbf71300c8b5005944c1708a354f422af1558a11fd7730b4930dd945f5ce1c35e4acd3cc4bf5e9f', 'de57b60e14dc1ea4218e05781df293ef28bd15be17d032e371e8137b209cc4b21ed7d99af3f5ddf5116157052ed2cd7123df056267b2d0db688b5b9cf3cd8abe'),
+('11111111-1111-1111-1111-111111111111', 'd5a73df5fda49b54e2f1bc17329f72dce176651d717fd91abdbf71311c8b5115944c1718a354f422af1558a11fd7731b4931dd945f5ce1c35e4acd3cc4bf5e9f', 'de57b61e14dc1ea4218e15781df293ef28bd15be17d132e371e8137b219cc4b21ed7d99af3f5ddf5116157152ed2cd7123df156267b2d1db688b5b9cf3cd8abe');
 
 INSERT INTO profile (entity_id, email, name, description)
-VALUES (1, 'theguy@gurumojo.net', 'theguy', 'The Guy @ Guru Mojo');
+VALUES
+(1, 'theguy@gurumojo.net', 'theguy', 'The Guy @ Guru Mojo'),
+(2, 'thebot@gurumojo.net', 'thebot', 'The Bot @ Guru Mojo');
+
+INSERT INTO aspect (name, description)
+VALUES
+('gurumojo', 'ops role'),
+('ohnomojo', 'user role'),
+('nadamojo', 'guest role');
+
+INSERT INTO warrant (name, description)
+VALUES
+('*', 'ops.meta permission'),
+('@', 'user.meta permission'),
+('!', 'guest.meta permission');
+
+INSERT INTO entity_aspect (entity_id, aspect_id)
+VALUES (1, 1), (1, 2), (2, 3);
+
+INSERT INTO aspect_warrant (aspect_id, warrant_id)
+VALUES (1, 1), (2, 2), (3, 3);
 
 INSERT INTO token (sub, refresh)
 VALUES ('00000000-0000-0000-0000-000000000000', 'JWT');
-
-INSERT INTO warrant (name)
-VALUES ('*'), ('@');
-
-INSERT INTO aspect_entity (aspect, entity)
-VALUES (1, 1);
-
-INSERT INTO aspect_warrant (aspect, warrant)
-VALUES (1, 1);
 

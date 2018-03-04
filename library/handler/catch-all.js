@@ -1,6 +1,5 @@
 'use strict';
 const logger = require('../logger');
-const template = require('../response');
 const {API_NAME} = require('../constant');
 
 const namespace = `${API_NAME}.route.handler.catch-all`;

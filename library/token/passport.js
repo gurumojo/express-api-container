@@ -100,6 +100,7 @@ function generate(entity, payload) {
 
 function objectFromRow(payload) {
 	logger.debug(`${namespace}.transform`, payload);
+	if (!payload) throw new Error('FUBAR!');
 	return {user: payload};
 }
 
@@ -129,7 +130,7 @@ function localVerify(request, username, password, done) {
 		return Promise.all([
 			entity,
 			hash(password, entity.salt),
-			data.one(data.query.getAuth, {entityID: entity.id})
+			data.one(data.query.getUser, {where: `WHERE e.id = ${entity.id}`})
 		])
 		.then(partial(localValidate, request, done));
 	})

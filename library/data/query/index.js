@@ -1,10 +1,10 @@
 'use strict';
 const admin = require('./admin');
-const getAuth = require('./get-auth');
+const getUser = require('./get-user');
 
 const SQL = {
 
-	getAuth, // ... $[entityID] ...
+	getUser, // ... $[where] ... -- e.id = entity_id AND e.uuid = entity_uuid
 
 	getCredential: `SELECT * FROM entity WHERE uuid = $[uuid]`,
 
