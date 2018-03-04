@@ -1,5 +1,5 @@
 'use strict';
-const status = require('../library/router')();
+const status = require('../lib/router')();
 
 status.get('/', (request, response) => {
 	response.send({status: 'OK'});

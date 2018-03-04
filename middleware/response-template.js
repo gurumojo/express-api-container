@@ -1,6 +1,6 @@
 'use strict';
 
-const template = require('../library/response');
+const template = require('../lib/response');
 
 
 function responseTemplate(request, response, next) {

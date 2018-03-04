@@ -1,10 +1,10 @@
 'use strict';
 const {pick} = require('lodash');
 
-const constant = require('../library/constant');
-const json = require('../library/json');
-const logger = require('../library/logger');
-const {isStatusRoute} = require('../library/request');
+const constant = require('../lib/constant');
+const json = require('../lib/json');
+const logger = require('../lib/logger');
+const {isStatusRoute} = require('../lib/request');
 
 const namespace = `${constant.API_NAME}.response`;
 

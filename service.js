@@ -2,15 +2,15 @@
 const bodyParser = require('body-parser');
 const {get, partial} = require('lodash');
 
-const constant = require('./library/constant');
-const discover = require('./library/discover');
-const json = require('./library/json');
-const logger = require('./library/logger');
-const network = require('./library/network');
-//const pubsub = require('./library/pubsub');
-const router = require('./library/router');
-const status = require('./library/status');
-const {passport} = require('./library/token');
+const constant = require('./lib/constant');
+const discover = require('./lib/discover');
+const json = require('./lib/json');
+const logger = require('./lib/logger');
+const network = require('./lib/network');
+//const pubsub = require('./lib/pubsub');
+const router = require('./lib/router');
+const status = require('./lib/status');
+const {passport} = require('./lib/token');
 
 const host = network().reduce((value, candidate) => {
 	return candidate === '127.0.0.1' ? value : candidate;

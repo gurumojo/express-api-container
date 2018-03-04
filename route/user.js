@@ -1,5 +1,5 @@
 'use strict';
-const user = require('../library/router')();
+const user = require('../lib/router')();
 
 const getUser = require('./handler/get-user');
 const getUserList = require('./handler/get-user-list');

@@ -1,9 +1,9 @@
 'use strict';
 const {partial} = require('lodash');
 
-const logger = require('../../library/logger');
-const {API_NAME} = require('../../library/constant');
-const {terminus} = require('../../library/handler');
+const logger = require('../../lib/logger');
+const {API_NAME} = require('../../lib/constant');
+const {terminus} = require('../../lib/handler');
 
 const namespace = `${API_NAME}.route.handler.get-user-list`;
 

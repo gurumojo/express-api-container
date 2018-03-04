@@ -1,5 +1,5 @@
 'use strict';
-const data = require('../library/data');
+const data = require('../lib/data');
 
 
 function requestData(request, response, next) {

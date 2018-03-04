@@ -1,6 +1,6 @@
 'use strict';
-const token = require('../library/router')();
-const {passport} = require('../library/token');
+const token = require('../lib/router')();
+const {passport} = require('../lib/token');
 
 
 token.get('/',
