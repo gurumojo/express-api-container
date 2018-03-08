@@ -1,0 +1,11 @@
+{
+	"JWT_ALGORITHM": "HS512",
+	"JWT_AUDIENCE": "gurumojo.net",
+	"JWT_CLOCK_TOLERANCE": 0,
+	"JWT_EXPIRES_IN": "1h",
+	"JWT_ISSUER": "api.gurumojo.net",
+	"JWT_MAX_AGE": "1h",
+	"JWT_SECRET": "y0uRbl00Dt4st3Slik3$yruP",
+	"JWT_REFRESH_RANGE": "30",
+	"JWT_REFRESH_UNIT": "m"
+}

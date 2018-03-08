@@ -1,23 +1,26 @@
 'use strict';
 const {pick} = require('lodash');
 
-const constant = require('../library/constant');
-const json = require('../library/json');
-const logger = require('../library/logger');
+const constant = require('../lib/constant');
+const json = require('../lib/json');
+const logger = require('../lib/logger');
+const {isStatusRoute} = require('../lib/request');
 
-const EXPRESS_HOST = process.env.EXPRESS_HOST || constant.EXPRESS_HOST;
+const namespace = `${constant.API_NAME}.request`;
 
-function isStatusRoute(request) {
-	return (request.path === '/status' || request.baseUrl === '/status');
-}
 
 function requestLogger(request, response, next) {
-	const method = isStatusRoute(request) ? 'debug' : 'info';
-	logger[method](`${EXPRESS_HOST}.request`, Object.assign(
+	let body = json.string(request.body) || request.body;
+	let method = isStatusRoute(request) ? 'debug' : 'info';
+	logger[method](namespace, Object.assign(
 		pick(request, constant.LOGGER_WHITELIST_EXPRESS_REQUEST),
-		{body: json.string(request.body)}
+		{
+			body: body === '{}' ? null : body,
+			headers: json.string(request.headers)
+		}
 	));
 	next();
 }
+
 
 module.exports = requestLogger;

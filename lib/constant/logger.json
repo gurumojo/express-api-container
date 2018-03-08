@@ -1,0 +1,22 @@
+{
+	"LOGGER_BLACKLIST_OBJECT_MEMBER": [
+		"cookie",
+		"flash",
+		"password",
+		"secret",
+		"sessionID",
+		"token"
+	],
+	"LOGGER_WHITELIST_EXPRESS_REQUEST": [
+		"method",
+		"path",
+		"query",
+		"body",
+		"headers"
+	],
+	"LOGGER_WHITELIST_EXPRESS_RESPONSE": [
+		"statusCode",
+		"body",
+		"headers"
+	]
+}

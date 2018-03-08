@@ -1,22 +1,21 @@
 'use strict';
 const {pick} = require('lodash');
 
-const constant = require('../library/constant');
-const logger = require('../library/logger');
+const constant = require('../lib/constant');
+const json = require('../lib/json');
+const logger = require('../lib/logger');
+const {isStatusRoute} = require('../lib/request');
 
-const EXPRESS_HOST = process.env.EXPRESS_HOST || constant.EXPRESS_HOST;
+const namespace = `${constant.API_NAME}.response`;
 
-function isStatusRoute(request) {
-	return (request.path === '/status' || request.baseUrl === '/status');
-}
 
 function responseLogger(request, response, next) {
-	const send = response.send;
-	let called = false;
+	let logged = false;
+	let send = response.send;
 	response.send = body => {
 		send.apply(response, [body]);
-		if (!called) {
-			called = true;
+		if (!logged) {
+			let headers = response.getHeaders();
 			let method = 'info';
 			if (response.statusCode >= 500) {
 				method = 'error';
@@ -26,14 +25,18 @@ function responseLogger(request, response, next) {
 			if (isStatusRoute(request)) {
 				method = 'debug';
 			}
-			logger[method](`${EXPRESS_HOST}.response`, Object.assign(
-				{sessionID: request.sessionID},
+			logger[method](namespace, Object.assign(
 				pick(response, constant.LOGGER_WHITELIST_EXPRESS_RESPONSE),
-				{body}
+				{
+					body: json.string(json.object(body) || body),
+					headers: json.string(headers)
+				}
 			));
+			logged = true;
 		}
 	};
 	next();
 }
+
 
 module.exports = responseLogger;

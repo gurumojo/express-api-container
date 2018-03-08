@@ -1,27 +1,45 @@
 {
   "name": "express-api-container",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Docker Container for Express API Service",
-  "main": "service.js",
-  "scripts": {
-    "test": "echo 'Error: no test specified' && exit 1"
-  },
+  "author": "theguy@gurumojo.net",
+  "license": "ISC",
+  "homepage": "https://github.com/gurumojo/express-api-container#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/gurumojo/express-api-container.git"
   },
-  "author": "theguy@gurumojo.net",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/gurumojo/express-api-container/issues"
   },
-  "homepage": "https://github.com/gurumojo/express-api-container#readme",
   "dependencies": {
-    "body-parser": "^1.17.1",
-    "connect-flash": "^0.1.1",
-    "connect-redis": "^3.2.0",
-    "express": "^4.15.2",
-    "express-session": "^1.15.2",
-    "lodash": "^4.17.4"
-  }
+    "bluebird": "^3.5.1",
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "jsonwebtoken": "^8.1.1",
+    "lodash": "^4.17.4",
+    "moment": "^2.21.0",
+    "passport": "^0.4.0",
+    "passport-http-bearer": "^1.0.1",
+    "passport-local": "^1.0.0",
+    "passport-oauth": "^1.0.0",
+    "passport-strategy": "^1.0.0",
+    "pg-promise": "^7.4.1",
+    "redis": "^2.8.0",
+    "request": "^2.83.0",
+    "request-promise": "^4.2.2",
+    "require-all": "^2.2.0",
+    "winston": "^2.4.0"
+  },
+  "devDependencies": {
+    "intern": "^4.0.0-rc.1"
+  },
+  "engines": {
+    "node": ">=8.2"
+  },
+  "scripts": {
+    "status": "./bin/status.js",
+    "test": "intern"
+  },
+  "main": "service.js"
 }

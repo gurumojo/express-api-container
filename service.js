@@ -1,104 +1,147 @@
 'use strict';
-const init = Date.now();
+const service = require('cluster');
+const {find, partial} = require('lodash');
 
-const bodyParser = require('body-parser');
-const express = require('express');
-const expressSession = require('express-session');
-const flash = require('connect-flash');
-const process = require('process');
-const readdir = require('fs').readdirSync;
-const RedisStore = require('connect-redis')(expressSession)
-const {get, partial} = require('lodash');
+const constant = require('./lib/constant');
+const json = require('./lib/json');
+const logger = require('./lib/logger');
+const network = require('./lib/network');
+const worker = require('./worker')
 
-const constant = require('./library/constant');
-const json = require('./library/json');
-const logger = require('./library/logger');
-const network = require('./library/network');
-const passport = require('./library/session');
-const pubsub = require('./library/pubsub');
+const host = network().reduce((value, candidate) => {
+	return candidate === '127.0.0.1' ? value : candidate;
+}, null);
 
-const EXPRESS_HOST = process.env.EXPRESS_HOST || constant.EXPRESS_HOST;
-const EXPRESS_PORT = process.env.EXPRESS_PORT || constant.EXPRESS_PORT;
-const NODE_ENV = process.env.NODE_ENV;
-const REDIS_HOST = process.env.REDIS_HOST || constant.REDIS_HOST;
-const REDIS_PORT = process.env.REDIS_PORT || constant.REDIS_PORT;
-const SESSION_SECRET = process.env.SESSION_SECRET || constant.SESSION_SECRET;
-
-const errorMethodNotAllowed = {
-	error: {
-		code: constant.HTTP_STATUS_METHOD_NOT_ALLOWED,
-		message: 'METHOD_NOT_ALLOWED'
-	}
+const config = {
+	cores: constant.CPU_COUNT,
+	host,
+	port: constant.EXPRESS_PORT
 };
 
-function delegate(channel, message) {
-	const object = json.object(message);
-	if (get(object, 'error')) {
-		logger.error(`${EXPRESS_HOST}.delegate`, error);
-	}
-	if (!get(object, 'subscribe')) {
-		logger.info(`${EXPRESS_HOST}.delegate`, object);
-		logger.warn(`${EXPRESS_HOST}.${object.method}`, {pending: 'message delegation'});
-	}
+const whitelist = ["code","connected","exitCode","id","killed","pid","process","state","writeQueueSize"];
+
+let workers;
+
+let namespace = `${constant.API_NAME}`;
+
+
+function api(worker) {
+	let members = Object.keys(worker);
+	//logger.debug(`${namespace}.service.api`, json.string({members}));
+	return members.reduce((object, member) => {
+		let type = typeof worker[member];
+		let value = {};
+		if (whitelist.includes(member)) {
+			switch (type) {
+				case 'function':
+					value[member] = `function ${member}(...) {...}`;
+					break;
+				case 'object':
+					value[member] = (!!worker[member] || undefined)
+						&& api(worker[member]);
+					break;
+				default: // 'boolean', 'number', 'string', 'undefined'
+					value[member] = worker[member];
+			}
+		}
+		return Object.assign(object, value);
+	}, {});
 }
 
-function discover(type, array, value) {
-	if (value.indexOf('.') !== 0) {
-		const name = value.split('.')[0];
-		logger.info(`${EXPRESS_HOST}.discover`, {type, name});
-		array.push({
-			module: require(`./${type}/${value}`),
-			name,
-			type
+function broadcast(message) {
+	logger.debug(`${namespace}.service.broadcast`, json.string(message));
+	return Object.values(service.workers).reduce((list, worker) => {
+		list.push({
+			id: worker.id,
+			pid: worker.process.pid,
+			result: worker.send(message)
 		});
+		return list;
+	}, []);
+}
+
+function restart() {
+	for (const id in service.workers) {
+		worker.on('exit', () => {
+			if (!worker.exitedAfterDisconnect) return;
+			logger.info(`${namespace}.exit`, {pid:worker.process.pid, restart:true});
+			service.fork({REPLACED_PROCESS:worker.process.pid});
+		});
+		worker.disconnect();
 	}
-	return array;
+}
+
+function initializeService() {
+	namespace = `${namespace}.service`;
+	logger.info(`${namespace}.init`, config);
+	logger.meta({master: process.pid});
+
+	service.on('setup', settings =>
+		logger.debug(`${namespace}.setup`, json.string(api(settings))));
+
+	service.on('fork', worker =>
+		logger.debug(`${namespace}.fork`, json.string(api(worker))));
+
+	service.on('online', worker =>
+		logger.debug(`${namespace}.online`, json.string(api(worker))));
+
+	service.on('listening', (worker, address) =>
+		logger.debug(`${namespace}.listening`,
+			json.string(Object.assign({worker: worker.id}, address))));
+
+	service.on('disconnect', worker =>
+		logger.debug(`${namespace}.disconnect`, json.string(api(worker))));
+
+	service.on('message', (worker, message) => {
+		logger.info(`${namespace}.receive`, json.string(message));
+	});
+
+	service.on('exit', (worker, code, signal) => {
+		logger.warn(`${namespace}.exit`, json.string(api(worker)));
+		if (code !== 0 && !worker.exitedAfterDisconnect) {
+			service.fork();
+		}
+	});
+
+	process.on('SIGUSR2', () => {
+		logger.info(`${namespace}.restart`, {signal: 'SIGUSR2'});
+		restart();
+	});
+
+	for (let i = 0; i < constant.CPU_COUNT; i++) {
+		service.fork();
+	}
 }
 
 
-logger.info(`${EXPRESS_HOST}.init`, {timestamp: init});
+function randomKill() {
+	const random = Math.random() * 10000;
+	setTimeout(() => service.worker.kill(9), random);
+}
 
-const service = express();
+function initializeWorker() {
+	namespace = `${namespace}.worker-${service.worker.id}`;
+	logger.meta({worker: process.pid});
+	logger.debug(`${namespace}.init`, {pid: process.pid});
 
-service.disable('etag');
-service.disable('x-powered-by');
-
-service.use(bodyParser.json());
-
-service.use(flash());
-
-service.use(expressSession({
-	resave: false,
-	saveUninitialized: false,
-	secret: SESSION_SECRET,
-	store: new RedisStore({
-		host: REDIS_HOST,
-		port: REDIS_PORT,
-		prefix: 'session:',
-		ttl: 3600
-	})
-}));
-
-service.use(passport.initialize());
-service.use(passport.session());
-
-readdir(`${__dirname}/middleware`)
-.reduce(partial(discover, 'middleware'),  [])
-.forEach(middleware => service.use(middleware.module));
-
-readdir(`${__dirname}/route`)
-.reduce(partial(discover, 'route'), [])
-.forEach(route => service.use(`/${route.name}`, route.module));
-
-service.use('/', (request, response) => {
-	response.status(constant.HTTP_STATUS_METHOD_NOT_ALLOWED);
-	response.send(errorMethodNotAllowed);
-});
-
-service.listen(EXPRESS_PORT, () => {
-	logger.info(`${EXPRESS_HOST}.listen`, {
-		host: JSON.stringify(network()), 
-		port: EXPRESS_PORT
+	service.worker.on('error', error => {
+		logger.error(`${namespace}.error`, {failure: error.stack});
 	});
-	pubsub.subscribe(EXPRESS_HOST, delegate);
-});
+
+	service.worker.on('exit', (code, signal) => {
+		logger.warn(`${namespace}.exit`, json.string({code, signal}));
+	});
+
+	service.worker.on('message', message => {
+		logger.info(`${namespace}.receive`, json.string(message));
+	});
+
+	worker(/*{...}*/);
+}
+
+
+if (service.isMaster) {
+	initializeService();
+} else {
+	initializeWorker();
+}
