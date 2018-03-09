@@ -11,6 +11,7 @@ HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
 WORKDIR /opt/gurumojo
 COPY package.json package-lock.json /opt/gurumojo/
 RUN npm install
+# rm -rf ./node_modules ...?
 COPY . /opt/gurumojo/
 
 USER node

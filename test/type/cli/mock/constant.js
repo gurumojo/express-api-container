@@ -1,5 +1,7 @@
 'use strict';
+const freeze = require('../../../../lib/freeze');
 
-module.exports = Object.freeze({
+module.exports = freeze({
 	API_NAME: 'mock-api'
+	
 });

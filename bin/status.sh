@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+
 'use strict';
-require('request-promise');
+const rp = require('request-promise');
 
 rp('http://0.0.0.0:8000/status')
 .then(x => console.log(JSON.parse(x).status))
