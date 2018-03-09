@@ -32,14 +32,18 @@
     "winston": "^2.4.0"
   },
   "devDependencies": {
-    "intern": "^4.0.0-rc.1"
+    "intern": "^4.0.0-rc.1",
+    "mockery": "^2.1.0",
+    "onchange": "^3.3.0",
+    "sinon": "^4.4.2"
   },
   "engines": {
     "node": ">=8.2"
   },
   "scripts": {
     "status": "./bin/status.js",
-    "test": "intern"
+    "test": "intern",
+    "watch": "onchange './**/*.js' -v -- intern"
   },
   "main": "service.js"
 }
