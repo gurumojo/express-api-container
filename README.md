@@ -2,6 +2,7 @@
 
 Docker Container for Express API Service
 
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgurumojo%2Fexpress-api-container.svg?type=small)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgurumojo%2Fexpress-api-container?ref=badge_small)
 
 
 ## About
@@ -88,11 +89,10 @@ feature tests:
       "fixSessionCapabilities": <false || "no-detect">,
   ...
 ```
+
  
 
-
 ## Tuning
-
 
 
 

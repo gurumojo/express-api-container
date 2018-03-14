@@ -1,0 +1,14 @@
+{
+	"user": {
+
+		"/": {
+			"GET": ["user.delete"],
+			"PUT": ["user.create"]
+		},
+
+		"/:userID": {
+			"GET": ["user.read"],
+			"PUT": ["user.update", "user.delete"]
+		}
+	}
+}
