@@ -6,7 +6,8 @@ function mockRequest(sandbox) {
 			any: sandbox.stub(),
 			one: sandbox.stub(),
 			query: {
-				getUser: sandbox.stub()
+				getUser: sandbox.stub(),
+				putUser: sandbox.stub()
 			}
 		},
 		params: {

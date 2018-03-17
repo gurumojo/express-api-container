@@ -12,7 +12,7 @@ const exitDelayMilliseconds = 100;
 function deferredExit(code = 0, message) {
 	setTimeout(() => {
 		performance.mark(`kill:${process.pid}`);
-		//console.log("\n", performance.getEntries());
+		console.log("\n", performance.getEntries());
 		console.log("\n", `Exit code: ${code}`);
 		process.exit(code);
 	}, exitDelayMilliseconds);
