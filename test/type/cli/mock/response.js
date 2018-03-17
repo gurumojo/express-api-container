@@ -15,6 +15,10 @@ function mockResponse(sandbox) {
 				methodNotAllowed: {
 					dispatch: sandbox.stub(),
 					status: 405
+				},
+				ok: {
+					dispatch: sandbox.stub(),
+					status: 200
 				}
 			}
 		}
