@@ -1,5 +1,8 @@
 {
   "description": "Express API Container",
+  "coverage": [
+    
+  ],
   "node": {
     "suites": [ "test/type/cli/**/*.js" ]
   },

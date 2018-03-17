@@ -2,6 +2,7 @@
 
 Docker Container for Express API Service
 
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fgurumojo%2Fexpress-api-container.svg?type=small)](https://app.fossa.io/projects/git%2Bgithub.com%2Fgurumojo%2Fexpress-api-container?ref=badge_small)
 
 
 ## About
@@ -26,23 +27,29 @@ patch migrations, pubsub channel subscriptions for responding to system events
 other than direct user agent requests, token based authentication, role based
 access control, unit and functional test coverage, and a whole lot of love.
 
+Oh, was there any mention that default behavior is to run a cluster of worker
+processes on a round robin shared port with IPC messaging? This is intended
+to improve throughput on multi-core machines, and the number of workers the
+master process keeps alive is tunable via `docker ...  -e CPU_COUNT=<int> ...`
+runtime configuration.
+
 Note: All times are saved and served in UTC.
 
 
 ## Usage
 
 Precondition: both Postgres and Redis services need to be available to start
-this Express API with pubsub handlers. Providing connection details is fully
+this HTTP API with pubsub handlers. Providing connection details is fully
 configurable via static JSON and dynamic environment variable input.
 
-> docker build . --force-rm -t gurumojo/express-api-container
+> `docker build . --force-rm -t gurumojo/express-api-container`
 
-> docker run -d --rm -p 8000:8000 \
+> `docker run -d --rm -p 8001:8000 \
 	-e POSTGRES_HOST=172.17.0.2 -e REDIS_HOST=172.17.0.3 \
-	--name awesome-api-001 gurumojo/express-api-container
+	--name awesome-api-001 gurumojo/express-api-container`
 
-See `./library/constant/index.js` for dynamic `runtimeConfig` options available.
-Static configuration options are detailed in `./library/constant/*.js`.
+See `./lib/constant/index.js` for dynamic `runtimeConfig` options available.
+Static configuration options are detailed in `./lib/constant/*.js`.
  
 
 
@@ -74,10 +81,18 @@ To print out runtime configuration details per config:
 
 Or set `{coverage: false}` in `./intern.json` in addition to disabling browser
 feature tests:
-`...
+```javascript
+  ...
   "environments": [
     {
       "browserName": "chrome",
       "fixSessionCapabilities": <false || "no-detect">,
- ...
-`
+  ...
+```
+
+ 
+
+## Tuning
+
+
+
