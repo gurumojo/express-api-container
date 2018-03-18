@@ -5,7 +5,7 @@ registerSuite('lib/config', () => {
 
 	const {readdirSync, realpathSync} = require('fs');
 
-	const subjectUnderTest = '../../../../lib/config';
+	const subjectUnderTest = '../../../lib/config';
 
 	let directory, files;
 

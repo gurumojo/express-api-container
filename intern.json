@@ -4,10 +4,10 @@
     
   ],
   "node": {
-    "suites": [ "test/type/cli/**/*.js" ]
+    "suites": [ "test/node/**/*.js" ]
   },
   "browser": {
-    "suites": [ "test/type/dom/**/*.js" ]
+    "suites": [ "test/browser/**/*.js" ]
   },
   "environments": [
     { "browserName": "node" },

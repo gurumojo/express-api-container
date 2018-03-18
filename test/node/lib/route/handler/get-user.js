@@ -7,12 +7,12 @@ registerSuite('lib/handler/get-user', () => {
 	const sinon = require('sinon');
 	const {partial} = require('lodash');
 
-	const constant = require('../../mock/constant');
-	const mockLogger = require('../../mock/logger');
-	const mockResponse = require('../../mock/response');
-	const mockRequest = require('../../mock/request');
+	const constant = require('../../../mock/constant');
+	const mockLogger = require('../../../mock/logger');
+	const mockResponse = require('../../../mock/response');
+	const mockRequest = require('../../../mock/request');
 
-	const subjectUnderTest = '../../../../../lib/handler/get-user';
+	const subjectUnderTest = '../../../../../lib/route/handler/get-user';
 	const moduleWhitelist = [subjectUnderTest, 'lodash'];
 
 	let sandbox, logger, response, terminus, getUser;
@@ -27,8 +27,8 @@ registerSuite('lib/handler/get-user', () => {
 			terminus = sandbox.stub();
 			mockery.enable({useCleanCache: true});
 			mockery.registerAllowables(moduleWhitelist);
-			mockery.registerMock('../constant', constant);
-			mockery.registerMock('../logger', logger);
+			mockery.registerMock('../../constant', constant);
+			mockery.registerMock('../../logger', logger);
 			mockery.registerMock('./terminus', terminus);
 			getUser = require(subjectUnderTest);
 		},

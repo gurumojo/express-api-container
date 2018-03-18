@@ -1,6 +1,6 @@
 {
   "name": "express-api-container",
-  "version": "0.1.0",
+  "version": "0.3.0-rc1",
   "description": "Docker Container for Express API Service",
   "author": "theguy@gurumojo.net",
   "license": "ISC",
@@ -43,7 +43,7 @@
   },
   "scripts": {
     "status": "./bin/status.sh",
-    "test": "./bin/test.sh",
+    "test": "intern",
     "watch": "onchange './**/*.json' './**/*.js' -v -d 1000 -- intern"
   },
   "main": "server.js"

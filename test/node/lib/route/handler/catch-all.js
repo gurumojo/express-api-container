@@ -7,11 +7,11 @@ registerSuite('lib/handler/catch-all', () => {
 	const sinon = require('sinon');
 	const {partial} = require('lodash');
 
-	const constant = require('../../mock/constant');
-	const mockLogger = require('../../mock/logger');
-	const mockResponse = require('../../mock/response');
+	const constant = require('../../../mock/constant');
+	const mockLogger = require('../../../mock/logger');
+	const mockResponse = require('../../../mock/response');
 
-	const subjectUnderTest = '../../../../../lib/handler/catch-all';
+	const subjectUnderTest = '../../../../../lib/route/handler/catch-all';
 	const moduleWhitelist = [subjectUnderTest];
 
 	let sandbox, logger, response, catchAll;
@@ -24,8 +24,8 @@ registerSuite('lib/handler/catch-all', () => {
 			response = mockResponse(sandbox);
 			mockery.enable({useCleanCache: true});
 			mockery.registerAllowables(moduleWhitelist);
-			mockery.registerMock('../constant', constant);
-			mockery.registerMock('../logger', logger);
+			mockery.registerMock('../../constant', constant);
+			mockery.registerMock('../../logger', logger);
 			catchAll = require(subjectUnderTest);
 		},
 

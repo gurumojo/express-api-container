@@ -7,11 +7,11 @@ registerSuite('lib/handler/server-error', () => {
 	const sinon = require('sinon');
 	const {partial} = require('lodash');
 
-	const constant = require('../../mock/constant');
-	const mockLogger = require('../../mock/logger');
-	const mockResponse = require('../../mock/response');
+	const constant = require('../../../mock/constant');
+	const mockLogger = require('../../../mock/logger');
+	const mockResponse = require('../../../mock/response');
 
-	const subjectUnderTest = '../../../../../lib/handler/server-error';
+	const subjectUnderTest = '../../../../../lib/route/handler/server-error';
 	const moduleWhitelist = [subjectUnderTest];
 
 	let sandbox, logger, response, serverError;
@@ -24,8 +24,8 @@ registerSuite('lib/handler/server-error', () => {
 			response = mockResponse(sandbox);
 			mockery.enable({useCleanCache: true});
 			mockery.registerAllowables(moduleWhitelist);
-			mockery.registerMock('../constant', constant);
-			mockery.registerMock('../logger', logger);
+			mockery.registerMock('../../constant', constant);
+			mockery.registerMock('../../logger', logger);
 			serverError = require(subjectUnderTest);
 		},
 

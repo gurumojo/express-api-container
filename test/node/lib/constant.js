@@ -6,7 +6,7 @@ registerSuite('lib/constant', () => {
 	const {pick} = require('lodash');
 	const {readdirSync, realpathSync} = require('fs');
 
-	const subjectUnderTest = '../../../../lib/constant';
+	const subjectUnderTest = '../../../lib/constant';
 
 	const types = {
 		number: [
@@ -36,7 +36,7 @@ registerSuite('lib/constant', () => {
 				constant = require(subjectUnderTest);
 				directory = realpathSync(`${__dirname}/${subjectUnderTest}`);
 				files = readdirSync(directory).reduce((list, item) => {
-					if (item.indexOf('.json') !== -1) {
+					if (item.indexOf('.') !== 0 && item.indexOf('.json') !== -1) {
 						list.push(item);
 					}
 					return list;
@@ -54,7 +54,9 @@ registerSuite('lib/constant', () => {
 						let object = null;
 						try {
 							object = require(`${directory}/${fileName}`);
-						} catch (e) { }
+						} catch (e) {
+							console.log(e)
+						}
 						assert.exists(object);
 					});
 				}

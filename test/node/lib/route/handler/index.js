@@ -1,11 +1,11 @@
 const {assert} = intern.getPlugin('chai');
 const {registerSuite} = intern.getInterface('object');
 
-registerSuite('lib/handler/index', () => {
+registerSuite('lib/route/handler/index', () => {
 
 	const {camelCase} = require('lodash');
 
-	const subjectUnderTest = require('../../../../../lib/handler/index');
+	const subjectUnderTest = require('../../../../../lib/route/handler/index');
 
 	return {
 

@@ -6,10 +6,10 @@ registerSuite('lib/handler/terminus', () => {
 	const sinon = require('sinon');
 	const {partial} = require('lodash');
 
-	const mockLogger = require('../../mock/logger');
-	const mockResponse = require('../../mock/response');
+	const mockLogger = require('../../../mock/logger');
+	const mockResponse = require('../../../mock/response');
 
-	const subjectUnderTest = '../../../../../lib/handler/terminus';
+	const subjectUnderTest = '../../../../../lib/route/handler/terminus';
 
 	const extendedError = {message: 'extendedErrorMock', stack: 'extendedErrorStack', status: 400};
 	const rawError = {message: 'rawErrorMock', stack: 'rawErrorStack'};

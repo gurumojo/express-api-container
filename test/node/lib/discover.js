@@ -11,7 +11,7 @@ registerSuite('lib/discover', () => {
 	const mockLogger = require('../mock/logger');
 	const mockFS = require('../mock/fs');
 
-	const subjectUnderTest = '../../../../lib/discover';
+	const subjectUnderTest = '../../../lib/discover';
 	const moduleWhitelist = [subjectUnderTest, 'lodash', 'path'];
 
 	const files = ['.', '.git', 'LICENSE', 'info.json', 'server.js'];
