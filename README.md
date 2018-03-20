@@ -21,32 +21,44 @@ container runtime by services extending from this framework. Provided out of
 the box is a functional HTTP API, complete with a system for adding application
 constants, environment configurations, automatic filesystem discovery and
 import, safe JSON manipulation utilities, recursive object freezing, request
-and response logging including redaction of sensitive data, container
-healthchecks which poll the running system, database connection handling and
-patch migrations, pubsub channel subscriptions for responding to system events
-other than direct user agent requests, token based authentication, role based
-access control, unit and functional test coverage, and a whole lot of love.
+and response logging including redaction of sensitive data, container health
+checks which poll the running system, database connection handling and patch
+migrations, pubsub channel subscriptions for responding to system events other
+than direct user agent requests, token based authentication, role based access
+control, unit / functional / chaos test coverage, and a whole lot of love.
 
-Oh, was there any mention that default behavior is to run a cluster of worker
-processes on a round robin shared port with IPC messaging? This is intended
-to improve throughput on multi-core machines, and the number of workers the
-master process keeps alive is tunable via `docker ...  -e CPU_COUNT=<int> ...`
-runtime configuration.
+On startup a cluster of worker processes (one per cpu core by default) on a
+round robin port (managed via IPC messaging) each spin up a server instance.
+The number of workers the master process keeps alive is tunable via
+`docker run ...  -e CPU_COUNT=<int> ...` command flags.
 
-Note: All times are saved and served in UTC.
+Chaos agents may be dispatched at random intervals to disrupt happy path
+operations, tunable via runtime flags for max and min timeout as needed.
+The initial implementation is rather simplistic, merely throwing an uncaught
+exception within a given worker to show the master reacting by starting a new
+worker process. Nevertheless, hooks into this class of testing are available
+for development and help is welcome.  :)
 
 
 ## Usage
 
-Precondition: both Postgres and Redis services need to be available to start
-this HTTP API with pubsub handlers. Providing connection details is fully
+Precondition: both `postgres` and `redis` services need to be available to start
+the HTTP API and pubsub event handlers. Providing connection details is fully
 configurable via static JSON and dynamic environment variable input.
 
-> `docker build . --force-rm -t gurumojo/express-api-container`
+```bash
 
-> `docker run -d --rm -p 8001:8000 \
-	-e POSTGRES_HOST=172.17.0.2 -e REDIS_HOST=172.17.0.3 \
-	--name awesome-api-001 gurumojo/express-api-container`
+  docker build . --force-rm -t gurumojo/express-api-container
+
+  docker run -d --rm -p 8001:8000 \
+     --name awesome-api-001 gurumojo/express-api-container
+
+  docker run -d --rm -p 8002:8000 \
+     -e POSTGRES_HOST=172.17.0.2 -e REDIS_HOST=172.17.0.3 \
+     -e CHAOS_TIMEOUT_MIN_MS=2000 -e CHAOS_TIMEOUT_MAX_MS=20000 \
+     --name awesome-api-002 gurumojo/express-api-container
+
+```
 
 See `./lib/constant/index.js` for dynamic `runtimeConfig` options available.
 Static configuration options are detailed in `./lib/constant/*.js`.
@@ -55,38 +67,48 @@ Static configuration options are detailed in `./lib/constant/*.js`.
 
 ## Testing
 
-To list available testing configurations:
+```bash
 
-> npx intern showConfigs
+  # To list available testing configurations:
+  npx intern showConfigs
 
+  # To print out active runtime configuration details:
+  npx intern showConfig
 
-To print out active runtime configuration details:
+  # To print out runtime configuration details per config:
+  npx intern showConfig config=@dev
 
-> npx intern showConfig
-
-
-To print out runtime configuration details per config:
-
-> npx intern showConfig config=@dev
+```
 
 
 ### Invoke a test run
 
-> npx intern
+```bash
+
+  npx intern
+
+```
 
 
 ### WebDriver speed boost
 
-> npx intern coverage=
+```bash
+
+  npx intern coverage=
+
+```
 
 Or set `{coverage: false}` in `./intern.json` in addition to disabling browser
 feature tests:
+
 ```javascript
+
   ...
   "environments": [
     {
       "browserName": "chrome",
       "fixSessionCapabilities": <false || "no-detect">,
   ...
+
 ```
 
